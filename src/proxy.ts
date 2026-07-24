@@ -73,6 +73,6 @@ export const config = {
     "/recuperar-password",
     "/actualizar-password",
     "/api/:path*",
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|auth/callback).*)",
   ],
 };
