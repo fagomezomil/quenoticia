@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { sectionConfig } from "@/lib/types";
 import { useAuthStore } from "@/lib/store/auth";
 import { SOCIAL_LINKS } from "@/lib/social";
@@ -253,7 +254,15 @@ export default function Navbar() {
                   </div>
                 </div>
                 <button
-                  onClick={() => alert("Próximamente: inicio de sesión con Google")}
+                  onClick={async () => {
+                    setMenuOpen(false);
+                    const supabase = createClient();
+                    const redirectTo = `${window.location.origin}/auth/callback?next=/`;
+                    await supabase.auth.signInWithOAuth({
+                      provider: "google",
+                      options: { redirectTo },
+                    });
+                  }}
                   className="w-full flex items-center justify-center gap-2 py-2 border border-white/20 rounded text-white text-sm hover:bg-white/10 transition-colors"
                 >
                   <svg viewBox="0 0 24 24" className="w-4 h-4">

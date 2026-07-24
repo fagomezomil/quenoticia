@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import { useAuthStore } from "@/lib/store/auth";
 import UserDropdown, { SocialIcons } from "@/components/UserDropdown";
 
@@ -47,6 +48,16 @@ function GuestDropdown() {
     setTimeout(() => { setOpen(false); setClosing(false); }, 150);
   };
 
+  const handleGoogleLogin = async () => {
+    closeDropdown();
+    const supabase = createClient();
+    const redirectTo = `${window.location.origin}/auth/callback?next=/`;
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo },
+    });
+  };
+
   return (
     <div ref={ref} className="relative" style={{ overflow: "visible" }}>
       <button
@@ -73,7 +84,7 @@ function GuestDropdown() {
 
           {/* Google login */}
           <button
-            onClick={() => { closeDropdown(); alert("Próximamente: inicio de sesión con Google"); }}
+            onClick={handleGoogleLogin}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-[#f0efed] transition-colors"
           >
             <GoogleIcon />
