@@ -16,6 +16,19 @@ function LoginCard() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const handleGoogleLogin = async () => {
+    setError("");
+    const supabase = createClient();
+    const callbackUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`;
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: callbackUrl },
+    });
+    if (oauthError) {
+      setError("No se pudo iniciar sesión con Google. Intentá de nuevo.");
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -122,7 +135,7 @@ function LoginCard() {
         </div>
 
         <button
-          onClick={() => alert("Próximamente: inicio de sesión con Google")}
+          onClick={handleGoogleLogin}
           className="w-full flex items-center justify-center gap-2 mt-3 py-2.5 border border-border rounded hover:bg-[#f8f5f0] transition-colors"
         >
           <svg viewBox="0 0 24 24" className="w-4 h-4">
