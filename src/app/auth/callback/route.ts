@@ -1,35 +1,52 @@
-import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
 // Maneja el redirect de Supabase tras login OAuth (Google).
 // Intercambia el `code` por una sesión y redirige al destino pedido.
-function safeNext(raw: string | null, origin: string): string {
-  // Solo paths internos: deben empezar con "/" y no "//" (protocol-relative).
+// Las cookies se setean en el NextResponse saliente (no en cookies() del request),
+// porque en Next.js 16 Route Handlers, cookies().set() no se propaga al response.
+function safeNext(raw: string | null): string {
   if (!raw) return "/";
-  const decoded = (() => {
-    try {
-      return decodeURIComponent(raw);
-    } catch {
-      return raw;
-    }
-  })();
+  let decoded = raw;
+  try {
+    decoded = decodeURIComponent(raw);
+  } catch {
+    // keep raw
+  }
   if (decoded.startsWith("/") && !decoded.startsWith("//")) return decoded;
   return "/";
 }
 
-export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
-  const next = safeNext(searchParams.get("next"), origin);
+export async function GET(request: NextRequest) {
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
+  const next = safeNext(requestUrl.searchParams.get("next"));
+  const origin = requestUrl.origin;
 
   if (code) {
-    const supabase = await createClient();
+    const redirectResponse = NextResponse.redirect(`${origin}${next}`);
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              redirectResponse.cookies.set(name, value, options),
+            );
+          },
+        },
+      },
+    );
+
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      return redirectResponse;
     }
   }
 
-  // Si falla el intercambio o no hay code, volver al login con error
   return NextResponse.redirect(`${origin}/login?error=oauth`);
 }
