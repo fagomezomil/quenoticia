@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import type { Client } from "@/lib/types";
+import { saveClient } from "@/app/admin/clients/actions";
 
 interface ClientFormProps {
   client?: Client;
@@ -22,53 +22,34 @@ export default function ClientForm({ client }: ClientFormProps) {
   const [billingName, setBillingName] = useState(client?.billing_name ?? "");
   const [cuit, setCuit] = useState(client?.cuit ?? "");
   const [notes, setNotes] = useState(client?.notes ?? "");
-  const [saving, setSaving] = useState(false);
+  const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setError("");
 
-    const supabase = createClient();
-    const payload = {
-      name,
-      email: email || null,
-      phone: phone || null,
-      phone_landline: phoneLandline || null,
-      postal_code: postalCode || null,
-      billing_address: billingAddress || null,
-      billing_name: billingName || null,
-      cuit: cuit || null,
-      notes: notes || null,
-    };
+    const formData = new FormData();
+    if (client) formData.set("id", client.id);
+    formData.set("name", name);
+    formData.set("email", email);
+    formData.set("phone", phone);
+    formData.set("phone_landline", phoneLandline);
+    formData.set("postal_code", postalCode);
+    formData.set("billing_address", billingAddress);
+    formData.set("billing_name", billingName);
+    formData.set("cuit", cuit);
+    formData.set("notes", notes);
 
-    if (isEditing) {
-      const { error: updateError } = await supabase
-        .from("clients")
-        .update(payload)
-        .eq("id", client!.id);
-
-      if (updateError) {
-        setError("Error al actualizar: " + updateError.message);
-        setSaving(false);
+    startTransition(async () => {
+      const result = await saveClient(null, formData);
+      if (result?.error) {
+        setError(result.error);
         return;
       }
-    } else {
-      const { error: insertError } = await supabase
-        .from("clients")
-        .insert(payload);
-
-      if (insertError) {
-        console.error("Error creating client:", insertError);
-        setError("Error al crear: " + insertError.message);
-        setSaving(false);
-        return;
-      }
-    }
-
-    router.push("/admin/clients");
-    router.refresh();
+      router.push("/admin/clients");
+      router.refresh();
+    });
   };
 
   return (
@@ -211,10 +192,10 @@ export default function ClientForm({ client }: ClientFormProps) {
       <div className="flex gap-3 pt-2">
         <button
           type="submit"
-          disabled={saving}
+          disabled={pending}
           className="px-6 py-2.5 bg-ink text-white font-bold rounded hover:bg-ink/80 transition-colors disabled:opacity-50"
         >
-          {saving ? "Guardando..." : isEditing ? "Guardar Cambios" : "Crear Cliente"}
+          {pending ? "Guardando..." : isEditing ? "Guardar Cambios" : "Crear Cliente"}
         </button>
         <button
           type="button"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Ad, AdType, Section } from "@/lib/types";
@@ -50,13 +50,13 @@ const AD_RATIOS: Record<AdType, string> = {
 
 interface AdFormProps {
   ad?: Ad;
+  clients: ClientOption[];
 }
 
-export default function AdForm({ ad }: AdFormProps) {
+export default function AdForm({ ad, clients }: AdFormProps) {
   const router = useRouter();
   const isEditing = !!ad;
 
-  const [clients, setClients] = useState<ClientOption[]>([]);
   const [clientId, setClientId] = useState<string>(ad?.client_id ?? "");
   const [title, setTitle] = useState(ad?.title ?? "");
   const [type, setType] = useState<AdType>(ad?.type ?? "leaderboard");
@@ -83,15 +83,6 @@ export default function AdForm({ ad }: AdFormProps) {
   const [mobilePreviewUrl, setMobilePreviewUrl] = useState(ad?.mobile_image_url ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    const fetchClients = async () => {
-      const supabase = createClient();
-      const { data } = await supabase.from("clients").select("id, name").order("name");
-      if (data) setClients(data as ClientOption[]);
-    };
-    fetchClients();
-  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

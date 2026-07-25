@@ -1,10 +1,12 @@
 import { requireAdmin } from "@/lib/supabase/server";
+import { getClients } from "@/lib/clients";
 import AdminSiteLayout from "@/components/admin/AdminSiteLayout";
 import AdForm from "@/components/admin/AdForm";
 import Link from "next/link";
 
 export default async function NewAdPage() {
   const { user } = await requireAdmin();
+  const clients = (await getClients()).map((c) => ({ id: c.id, name: c.name }));
 
   return (
     <AdminSiteLayout role="admin" email={user.email!}>
@@ -15,7 +17,7 @@ export default async function NewAdPage() {
       </div>
       <h2 className="text-lg font-bold mb-6">Nuevo Aviso</h2>
       <div className="bg-white rounded-lg border border-border p-6">
-        <AdForm />
+        <AdForm clients={clients} />
       </div>
     </AdminSiteLayout>
   );

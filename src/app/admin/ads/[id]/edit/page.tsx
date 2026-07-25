@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getAdById } from "@/lib/ads";
+import { getClients } from "@/lib/clients";
 import AdminSiteLayout from "@/components/admin/AdminSiteLayout";
 import AdForm from "@/components/admin/AdForm";
 import Link from "next/link";
@@ -16,6 +17,8 @@ export default async function EditAdPage({ params }: EditAdPageProps) {
   const ad = await getAdById(id);
   if (!ad) redirect("/admin");
 
+  const clients = (await getClients()).map((c) => ({ id: c.id, name: c.name }));
+
   return (
     <AdminSiteLayout role="admin" email={user.email!}>
       <div className="mb-6">
@@ -25,7 +28,7 @@ export default async function EditAdPage({ params }: EditAdPageProps) {
       </div>
       <h2 className="text-lg font-bold mb-6">Editar Aviso</h2>
       <div className="bg-white rounded-lg border border-border p-6">
-        <AdForm ad={ad} />
+        <AdForm ad={ad} clients={clients} />
       </div>
     </AdminSiteLayout>
   );
