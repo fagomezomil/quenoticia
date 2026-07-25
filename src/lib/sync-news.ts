@@ -109,6 +109,7 @@ interface CachedArticleRow {
   breaking: boolean;
   layout: string;
   cached_at: string;
+  published_at: string | null;
 }
 
 function getSupabaseAdmin() {
@@ -214,6 +215,7 @@ async function syncSection(section: Section): Promise<number> {
     breaking: false,
     layout: "normal",
     cached_at: new Date().toISOString(),
+    published_at: item.published_at ?? null,
   }));
 
   // Upsert into Supabase
@@ -349,11 +351,14 @@ async function backfillArticle(row: Record<string, unknown>): Promise<void> {
 export async function getCachedArticles(section: Section): Promise<Article[]> {
   const { createClient: createServerClient } = await import("@/lib/supabase/server");
   const supabase = await createServerClient();
+  // Filtro de frescura: si el sync no corrio en 24h, notas stale no alimentan el hero.
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase
     .from("cached_articles")
     .select("*")
     .eq("section", section)
-    .order("cached_at", { ascending: false });
+    .gt("cached_at", yesterday)
+    .order("published_at", { ascending: false, nullsFirst: false });
 
   if (error || !data?.length) return [];
 

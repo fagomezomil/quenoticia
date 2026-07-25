@@ -1,0 +1,36 @@
+# Cron de sync de cached_articles via FreeNewsApi.
+# Corre 2x/dia a las 08:00 y 20:00 ART (UTC-3) = 11:00 y 23:00 UTC.
+# Llama a /api/sync-news (list) y despues a /api/backfill-details (imagenes + body).
+#
+# Secrets requeridos en GitHub (Settings > Secrets and variables > Actions):
+#   SYNC_NEWS_BASE_URL - URL base del deploy (ej: https://quenoticia.netlify.app). Sin barra final.
+#   CRON_SECRET        - mismo valor que CRON_SECRET en el server.
+#
+# Cuando migremos a VPS DonWeb, este workflow se puede desactivar y reemplazar
+# por crontab local del VPS.
+
+name: Sync News Cron
+
+on:
+  schedule:
+    - cron: "0 11,23 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Sync news (list)
+        run: |
+          curl -fsS --max-time 120 \
+            "${{ secrets.SYNC_NEWS_BASE_URL }}/api/sync-news?token=${{ secrets.CRON_SECRET }}" \
+            -o sync-response.json
+          cat sync-response.json
+
+      - name: Backfill details (images + body)
+        run: |
+          curl -fsS --max-time 300 \
+            "${{ secrets.SYNC_NEWS_BASE_URL }}/api/backfill-details?token=${{ secrets.CRON_SECRET }}" \
+            -o backfill-response.json
+          cat backfill-response.json
