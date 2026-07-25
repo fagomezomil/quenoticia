@@ -77,6 +77,7 @@ export async function generateSlidePng(data: SlideData): Promise<Buffer> {
       logoDataUrl={logoDataUrl}
       excerpt={data.excerpt}
       dateLabel={data.dateLabel}
+      sourceLabel={data.sourceLabel}
       chip={data.chip}
       venue={data.venue}
     />,

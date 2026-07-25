@@ -26,6 +26,8 @@ export interface SlideData {
   excerpt?: string;
   /** Fecha de la nota formateada para mostrar (ej: "20/07/2026"). */
   dateLabel?: string;
+  /** Fuente de la nota (ej: "TN", "TyC Sports.com"). Se muestra arriba de la fecha. */
+  sourceLabel?: string;
   /** Chip custom (para eventos de agenda: label + color propios).
    *  Si viene, reemplaza el chip de sectionConfig. */
   chip?: { label: string; color: string };
@@ -71,6 +73,7 @@ export function SlideTemplate({
   logoDataUrl,
   excerpt,
   dateLabel,
+  sourceLabel,
   chip,
   venue,
 }: SlideData) {
@@ -295,14 +298,40 @@ export function SlideTemplate({
         {
           style: {
             display: "flex",
-            fontFamily: "Inter",
-            fontWeight: 600,
-            fontSize: 20,
-            color: "#6b5d4f",
-            letterSpacing: 1,
+            flexDirection: "column",
+            alignItems: "flex-end",
           },
         },
-        dateLabel ?? "",
+        sourceLabel &&
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              fontFamily: "Inter",
+              fontWeight: 600,
+              fontSize: 14,
+              color: "#6b5d4f",
+              letterSpacing: 1,
+              marginBottom: 4,
+            },
+          },
+          sourceLabel,
+        ),
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              fontFamily: "Inter",
+              fontWeight: 600,
+              fontSize: 20,
+              color: "#6b5d4f",
+              letterSpacing: 1,
+            },
+          },
+          dateLabel ?? "",
+        ),
       ),
     ),
   );

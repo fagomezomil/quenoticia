@@ -132,25 +132,24 @@ export default function ArticleCard({
               {article.excerpt}
             </p>
           )}
-          <div className="mt-3 flex items-center gap-2 text-xs text-muted uppercase tracking-wide font-[family-name:var(--font-heading)]">
+          <div className="mt-3 font-[family-name:var(--font-heading)]">
             {byline && (
-              <>
-                <span className="font-semibold text-foreground/70">{byline}</span>
-                <span>·</span>
-              </>
+              <span className="block text-xs text-foreground/70 mb-0.5 truncate">{byline}</span>
             )}
-            <span>{article.date}</span>
-            {commentCount !== undefined && commentCount > 0 && (
-              <>
-                <span>·</span>
-                <span className="flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
-                    <path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v5a2 2 0 01-2 2H6l-3 3V4z" />
-                  </svg>
-                  {commentCount}
-                </span>
-              </>
-            )}
+            <div className="flex items-center gap-2 text-xs text-muted uppercase tracking-wide">
+              <span>{article.date}</span>
+              {commentCount !== undefined && commentCount > 0 && (
+                <>
+                  <span>·</span>
+                  <span className="flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                      <path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v5a2 2 0 01-2 2H6l-3 3V4z" />
+                    </svg>
+                    {commentCount}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </Link>
       </article>
@@ -192,9 +191,9 @@ export default function ArticleCard({
                 {article.excerpt}
               </p>
             )}
-            <div className="mt-3 text-xs text-muted uppercase tracking-wide font-[family-name:var(--font-heading)]">
-              {byline && <>{byline} · </>}
-              {article.date}
+            <div className="mt-3 font-[family-name:var(--font-heading)]">
+              {byline && <span className="block text-xs text-foreground/70 mb-0.5 truncate">{byline}</span>}
+              <span className="block text-xs text-muted uppercase tracking-wide">{article.date}</span>
             </div>
           </div>
         </Link>
@@ -248,9 +247,9 @@ export default function ArticleCard({
               </p>
             )}
             {/* Byline */}
-            <div className="mt-4 text-xs text-white/60 tracking-wide uppercase font-[family-name:var(--font-heading)]">
-              {byline && <>{byline} · </>}
-              {article.date}
+            <div className="mt-4 font-[family-name:var(--font-heading)]">
+              {byline && <span className="block text-xs text-white/50 mb-0.5 truncate">{byline}</span>}
+              <span className="block text-xs text-white/60 tracking-wide uppercase">{article.date}</span>
             </div>
           </div>
           {/* Bottom urgente rule */}
@@ -332,9 +331,9 @@ export default function ArticleCard({
                 {article.excerpt}
               </p>
             )}
-            <div className="mt-auto pt-3 text-xs text-muted uppercase tracking-wide font-[family-name:var(--font-heading)]">
-              {byline && <>{byline} · </>}
-              {article.date}
+            <div className="mt-auto pt-3 font-[family-name:var(--font-heading)]">
+              {byline && <span className="block text-xs text-foreground/70 mb-0.5 truncate">{byline}</span>}
+              <span className="block text-xs text-muted uppercase tracking-wide">{article.date}</span>
             </div>
           </div>
         </Link>
@@ -377,12 +376,14 @@ export default function ArticleCard({
               {article.excerpt}
             </p>
           )}
-          <div className="mt-auto pt-3 text-xs text-muted uppercase tracking-wide font-[family-name:var(--font-heading)]">
-            {byline && <>{byline} · </>}
-            {article.date}
-            {commentCount !== undefined && commentCount > 0 && (
-              <> · <span className="inline-flex items-center gap-0.5"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3"><path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v5a2 2 0 01-2 2H6l-3 3V4z" /></svg>{commentCount}</span></>
-            )}
+          <div className="mt-auto pt-3 font-[family-name:var(--font-heading)]">
+            {byline && <span className="block text-xs text-foreground/70 mb-0.5 truncate">{byline}</span>}
+            <div className="text-xs text-muted uppercase tracking-wide">
+              <span>{article.date}</span>
+              {commentCount !== undefined && commentCount > 0 && (
+                <> · <span className="inline-flex items-center gap-0.5"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3"><path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v5a2 2 0 01-2 2H6l-3 3V4z" /></svg>{commentCount}</span></>
+              )}
+            </div>
           </div>
         </div>
       </Link>

@@ -30,7 +30,7 @@ export async function retrySocialPost(postId: string) {
 
   const { data: rows } = await admin
     .from("articles")
-    .select("id, title, section, image_url, original_url, excerpt, created_at")
+    .select("id, title, section, image_url, original_url, excerpt, created_at, author")
     .in("id", ids);
 
   if (!rows || rows.length === 0) throw new Error("No se encontraron las notas originales");
@@ -62,6 +62,7 @@ export async function retrySocialPost(postId: string) {
         imageDataUrl: note.image_url ?? "",
         excerpt: note.excerpt ?? undefined,
         dateLabel: formatDateLabel(note.created_at),
+        sourceLabel: note.author ?? undefined,
       });
       const path = `social/retry-${timestamp}-${note.section}.png`;
       const { error: upErr } = await admin.storage.from("media").upload(path, png, {
@@ -228,7 +229,7 @@ export async function publishArticle(
   const admin = await getSupabaseAdmin();
   const { data: article } = await admin
     .from("articles")
-    .select("id, title, section, image_url, original_url, excerpt, created_at")
+    .select("id, title, section, image_url, original_url, excerpt, created_at, author")
     .eq("id", articleId)
     .single();
 
@@ -253,6 +254,7 @@ export async function publishArticle(
       imageDataUrl: article.image_url ?? "",
       excerpt: article.excerpt ?? undefined,
       dateLabel: formatDateLabel(article.created_at),
+      sourceLabel: article.author ?? undefined,
     });
     const path = `social/manual-${Date.now()}-${article.section}.png`;
     const { error: upErr } = await admin.storage.from("media").upload(path, png, {
