@@ -12,6 +12,11 @@
 .claude/
 .agents/
 
+# Claude Code / workflow artifacts (no subir al repo público)
+CLAUDE.md
+skills-lock.json
+replacements.txt
+
 # testing
 /coverage
 
@@ -37,6 +42,12 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# deploy targets ya no usados
+netlify.toml
+
+# screenshots de desarrollo
+/screenshots/
 
 # supabase (production secrets and DB structure)
 /supabase/
