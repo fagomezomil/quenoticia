@@ -21,7 +21,12 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const next = safeNext(requestUrl.searchParams.get("next"));
-  const origin = requestUrl.origin;
+  // Construir origin desde headers de proxy (Caddy pasa X-Forwarded-Host/Proto).
+  // Next.js standalone no usa estos headers para request.url automáticamente,
+  // así que sin esto el redirect se va a localhost:3000 (del socket de escucha).
+  const proto = request.headers.get("x-forwarded-proto") || requestUrl.protocol.replace(":", "");
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || requestUrl.host;
+  const origin = `${proto}://${host}`;
 
   if (code) {
     const redirectResponse = NextResponse.redirect(`${origin}${next}`);
