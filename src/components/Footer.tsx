@@ -66,7 +66,6 @@ export default function Footer() {
             </h3>
             <ul className="space-y-2 text-sm font-[family-name:var(--font-body)]">
               <li>redaccion@quenoticia.com.ar</li>
-              <li>+54 381 5555555</li>
               <li>Barrio Sur - San Miguel de Tucumán</li>
             </ul>
             <h4 className="mt-5 text-xs text-white/50 uppercase tracking-wider font-[family-name:var(--font-heading)] border-b border-white/20 pb-1">
