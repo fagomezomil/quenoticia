@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth";
 import { SOCIAL_LINKS } from "@/lib/social";
 
@@ -36,6 +37,7 @@ export default function UserDropdown() {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
   const logout = useAuthStore((s) => s.logout);
@@ -71,7 +73,13 @@ export default function UserDropdown() {
 
   const handleLogout = async () => {
     setClosing(true);
-    setTimeout(async () => { setOpen(false); setClosing(false); await logout(); }, 150);
+    setTimeout(async () => {
+      setOpen(false);
+      setClosing(false);
+      await logout();
+      router.push("/");
+      router.refresh();
+    }, 150);
   };
 
   const closeDropdown = () => {

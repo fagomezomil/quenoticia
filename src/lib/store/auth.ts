@@ -98,7 +98,9 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     const supabase = createClient();
     await supabase.auth.signOut();
     set({ user: null, profile: null, loading: false });
-    window.location.href = "/";
+    // El componente llamador maneja la navegación con router.push + router.refresh
+    // (sin window.location.href) para evitar full reload y mismatch server/client
+    // cuando las cookies de Supabase aún viajan en la request del server render.
   },
 
   refreshProfile: async () => {
