@@ -69,6 +69,19 @@ export default function Footer() {
               <li>+54 381 5555555</li>
               <li>Barrio Sur - San Miguel de Tucumán</li>
             </ul>
+            <h4 className="mt-5 text-xs text-white/50 uppercase tracking-wider font-[family-name:var(--font-heading)] border-b border-white/20 pb-1">
+              Publicidad
+            </h4>
+            <ul className="mt-3 space-y-2 text-sm font-[family-name:var(--font-body)]">
+              <li>
+                <Link
+                  href="/contrata-aqui"
+                  className="text-white/70 hover:text-brand transition-colors font-[family-name:var(--font-heading)] uppercase tracking-wide font-medium"
+                >
+                  Contratá Aquí
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
 
