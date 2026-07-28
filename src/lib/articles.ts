@@ -85,15 +85,26 @@ export async function getFeaturedArticles(limit = 6): Promise<CustomArticle[]> {
 }
 
 export async function getAllArticles(): Promise<CustomArticle[]> {
+  // Supabase REST API trae por default hasta 1000 filas por query sin paginar.
+  // Si hay más de 1000 notas, getAllArticles() simple las trunca y el admin
+  // no ve las más viejas. Paginar en chunks de 1000 hasta agotar.
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("articles")
-      .select("*")
-      .order("sort_date", { ascending: false });
-
-    if (error || !data) return [];
-    return data.map(mapRowToArticle);
+    const all: CustomArticle[] = [];
+    const pageSize = 1000;
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from("articles")
+        .select("*")
+        .order("sort_date", { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (error || !data || data.length === 0) break;
+      all.push(...data.map(mapRowToArticle));
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+    return all;
   } catch {
     return [];
   }
