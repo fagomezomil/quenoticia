@@ -17,6 +17,36 @@ function safeNext(raw: string | null): string {
   return "/";
 }
 
+// Hosts permitidos para construir el origin del redirect OAuth.
+// Caddy pasa X-Forwarded-Host desde el Host header del cliente — si un atacante
+// manda Host: evil.com, sin este check el redirect iría a evil.com${next}.
+// En prod NEXT_PUBLIC_SITE_URL define el host esperado; en dev permitimos localhost.
+function buildAllowedHosts(): Set<string> {
+  const hosts = new Set<string>(["localhost:3000", "localhost"]);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (siteUrl) {
+    try {
+      hosts.add(new URL(siteUrl).host);
+    } catch {
+      // siteUrl inválido — ignorar
+    }
+  }
+  return hosts;
+}
+
+function resolveHost(request: NextRequest, requestUrl: URL): string | null {
+  const allowed = buildAllowedHosts();
+  const candidates = [
+    request.headers.get("x-forwarded-host"),
+    request.headers.get("host"),
+    requestUrl.host,
+  ];
+  for (const c of candidates) {
+    if (c && allowed.has(c.toLowerCase())) return c;
+  }
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
@@ -24,8 +54,12 @@ export async function GET(request: NextRequest) {
   // Construir origin desde headers de proxy (Caddy pasa X-Forwarded-Host/Proto).
   // Next.js standalone no usa estos headers para request.url automáticamente,
   // así que sin esto el redirect se va a localhost:3000 (del socket de escucha).
-  const proto = request.headers.get("x-forwarded-proto") || requestUrl.protocol.replace(":", "");
-  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || requestUrl.host;
+  // Validamos el host contra un allowlist para evitar open-redirect via Host header.
+  const proto = request.headers.get("x-forwarded-proto") || "https";
+  const host = resolveHost(request, requestUrl);
+  if (!host) {
+    return new NextResponse("Host no válido", { status: 400 });
+  }
   const origin = `${proto}://${host}`;
 
   if (code) {
