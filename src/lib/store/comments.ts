@@ -25,9 +25,11 @@ export const useCommentsStore = create<CommentsState>()((set, get) => ({
     try {
       const supabase = createClient();
       // RLS expone: status='approved' + propios pending/flagged + admins ven todo
+      // author_name + author_avatar_url vienen denormalizados en comments (migración 032),
+      // no hacemos JOIN con profiles (RLS lo cierra al propio user o editores).
       const { data, error } = await supabase
         .from("comments")
-        .select("id, article_id, user_id, content, created_at, status, toxicity_score, profiles!comments_user_id_fkey(full_name, avatar_url)")
+        .select("id, article_id, user_id, content, created_at, status, toxicity_score, author_name, author_avatar_url")
         .eq("article_id", articleId)
         .order("created_at", { ascending: true });
 
@@ -36,8 +38,8 @@ export const useCommentsStore = create<CommentsState>()((set, get) => ({
           id: row.id as string,
           article_id: row.article_id as string,
           user_id: (row.user_id as string) || null,
-          user_name: ((row.profiles as Record<string, unknown>)?.full_name as string) || "Anónimo",
-          user_avatar_url: ((row.profiles as Record<string, unknown>)?.avatar_url as string) || null,
+          user_name: (row.author_name as string) || "Anónimo",
+          user_avatar_url: (row.author_avatar_url as string) || null,
           content: row.content as string,
           created_at: row.created_at as string,
           status: row.status as CommentStatus | undefined,

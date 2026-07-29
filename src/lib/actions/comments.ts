@@ -107,6 +107,12 @@ export async function submitComment(
   }
 
   // 4. Insert con service_role
+  // Denormalizamos author_name + author_avatar_url al insertar para no
+  // depender del JOIN con profiles (que ahora es RLS-cerrado al propio
+  // user o editores). Ver migración 032.
+  const userName = profile?.full_name || user.email || "Anónimo";
+  const userAvatar = profile?.avatar_url ?? null;
+
   const admin = await getSupabaseAdmin();
   const { data, error } = await admin
     .from("comments")
@@ -116,17 +122,16 @@ export async function submitComment(
       content: trimmed,
       status,
       toxicity_score: toxicityScore,
+      author_name: userName,
+      author_avatar_url: userAvatar,
     })
-    .select("id, article_id, user_id, content, created_at, status, toxicity_score")
+    .select("id, article_id, user_id, content, created_at, status, toxicity_score, author_name, author_avatar_url")
     .single();
 
   if (error || !data) {
     console.error("submitComment insert error:", error);
     return { ok: false, error: "Error al guardar el comentario" };
   }
-
-  const userName = profile?.full_name || user.email || "Anónimo";
-  const userAvatar = profile?.avatar_url ?? null;
 
   return {
     ok: true,
@@ -135,8 +140,8 @@ export async function submitComment(
       id: data.id as string,
       article_id: data.article_id as string,
       user_id: (data.user_id as string) || null,
-      user_name: userName,
-      user_avatar_url: userAvatar,
+      user_name: (data.author_name as string) || userName,
+      user_avatar_url: (data.author_avatar_url as string | null) ?? userAvatar,
       content: data.content as string,
       created_at: data.created_at as string,
       status: data.status as CommentStatus,

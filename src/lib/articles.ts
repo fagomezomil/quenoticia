@@ -133,7 +133,7 @@ export async function getComments(articleId: string): Promise<Comment[]> {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("comments")
-      .select("id, article_id, user_id, content, created_at, profiles!comments_user_id_fkey(full_name, avatar_url)")
+      .select("id, article_id, user_id, content, created_at, author_name, author_avatar_url")
       .eq("article_id", articleId)
       .order("created_at", { ascending: true });
 
@@ -143,8 +143,8 @@ export async function getComments(articleId: string): Promise<Comment[]> {
       id: row.id as string,
       article_id: row.article_id as string,
       user_id: (row.user_id as string) || null,
-      user_name: ((row.profiles as Record<string, unknown>)?.full_name as string) || "Anónimo",
-      user_avatar_url: ((row.profiles as Record<string, unknown>)?.avatar_url as string) || null,
+      user_name: (row.author_name as string) || "Anónimo",
+      user_avatar_url: (row.author_avatar_url as string) || null,
       content: row.content as string,
       created_at: row.created_at as string,
     }));

@@ -10,7 +10,7 @@ async function getComments() {
 
   const { data, error } = await supabase
     .from("comments")
-    .select("id, article_id, user_id, content, created_at, status, toxicity_score, report_count, profiles!comments_user_id_fkey(full_name, avatar_url), articles(title)")
+    .select("id, article_id, user_id, content, created_at, status, toxicity_score, report_count, author_name, author_avatar_url, articles(title)")
     .order("created_at", { ascending: false })
     .limit(200);
 
@@ -25,8 +25,8 @@ async function getComments() {
     status: row.status as string,
     toxicity_score: row.toxicity_score as number | null,
     report_count: (row.report_count as number) || 0,
-    user_name: ((row.profiles as Record<string, unknown>)?.full_name as string) || "Anónimo",
-    user_avatar_url: ((row.profiles as Record<string, unknown>)?.avatar_url as string) || null,
+    user_name: (row.author_name as string) || "Anónimo",
+    user_avatar_url: (row.author_avatar_url as string) || null,
     article_title: ((row.articles as Record<string, unknown>)?.title as string) || "Nota eliminada",
   }));
 
