@@ -22,17 +22,6 @@ function sponsoredToArticle(s: SponsoredContent): Article {
   };
 }
 
-function interleaveSponsored(articles: Article[], sponsored: Article[]): Article[] {
-  if (sponsored.length === 0) return articles;
-  const result = [...articles];
-  const interval = Math.max(2, Math.floor(result.length / (sponsored.length + 1)));
-  sponsored.forEach((s, i) => {
-    const pos = Math.min(interval * (i + 1) + i, result.length);
-    result.splice(pos, 0, s);
-  });
-  return result;
-}
-
 export const revalidate = 300;
 
 interface Props {
@@ -50,11 +39,12 @@ export default async function TucumanPage({ searchParams }: Props) {
   ]);
 
   const sponsoredIds = new Set(sponsoredContent.map((s) => s.id));
+  const sponsoredItems = sponsoredContent.map(sponsoredToArticle);
   // Scraper provides tucuman articles via the articles table — no FreeNewsApi needed
-  const sectionArticles = interleaveSponsored(
-    [...customArticles, ...getArticlesBySection("tucuman")],
-    sponsoredContent.map(sponsoredToArticle),
-  );
+  const sectionArticles = [
+    ...customArticles,
+    ...getArticlesBySection("tucuman"),
+  ];
   const leaderboardAds = ads.filter((a) => a.type === "leaderboard");
   const rectangleAds = ads.filter((a) => a.type === "rectangle");
 
@@ -67,6 +57,7 @@ export default async function TucumanPage({ searchParams }: Props) {
       leaderboardAds={leaderboardAds}
       rectangleAds={rectangleAds}
       sponsoredIds={sponsoredIds}
+      sponsoredItems={sponsoredItems}
       page={page}
     />
   );

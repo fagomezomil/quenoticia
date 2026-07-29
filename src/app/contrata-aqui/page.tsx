@@ -124,9 +124,9 @@ const porQue = [
       "Lectores de Tucumán y NOA que consumen información política, deportiva, económica, internacional, tucumana y de opinión todos los días.",
   },
   {
-    titulo: "Cobertura 2x/día",
+    titulo: "Cobertura actualizada",
     texto:
-      "Renovamos la portada a las 8:00 y a las 20:00 con artículos de 5 fuentes regionales y nacionales. Tu aviso convive con noticias frescas todo el día.",
+      "Mantenemos actualizadas varias veces al día la portada y sus secciones con artículos regionales y nacionales. Tu aviso convive con noticias frescas todo el día.",
   },
   {
     titulo: "Formatos para todos los presupuestos",

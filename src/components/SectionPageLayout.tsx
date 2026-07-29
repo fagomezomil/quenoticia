@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import ArticleCard from "@/components/ArticleCard";
 import AdRotator from "@/components/AdRotator";
+import SponsoredRotator from "@/components/SponsoredRotator";
 import { Article, Ad, Section, sectionConfig } from "@/lib/types";
 
 interface SectionPageLayoutProps {
@@ -15,11 +16,13 @@ interface SectionPageLayoutProps {
   leaderboardAds?: Ad[];
   rectangleAds?: Ad[];
   sponsoredIds?: Set<string>;
+  /** Contenidos patrocinados convertidos al tipo Article. Se rotan en el feed cada 7 notas. */
+  sponsoredItems?: Article[];
   page?: number;
   perPage?: number;
 }
 
-const PER_PAGE = 17;
+const PER_PAGE = 11;
 
 export default function SectionPageLayout({
   section,
@@ -29,6 +32,7 @@ export default function SectionPageLayout({
   leaderboardAds = [],
   rectangleAds = [],
   sponsoredIds = new Set(),
+  sponsoredItems = [],
   page = 1,
   perPage = PER_PAGE,
 }: SectionPageLayoutProps) {
@@ -44,11 +48,13 @@ export default function SectionPageLayout({
   const urgentArticles = sorted.filter((a) => a.layout === "urgente");
   const gridArticles = sorted.filter((a) => a.layout !== "urgente");
 
-  const totalPages = Math.max(1, Math.ceil(gridArticles.length / perPage));
+  // Page 1 keeps the editorial layout (featured + sidebar + grid).
+  // Featured+sidebar consumen 5 items, grid muestra `perPage` items más.
+  // Page 2+ muestra `perPage` items planos. Todas las páginas terminan con
+  // grid de `perPage` items → 8 articles + 1 sponsored + 3 (chunk 2) = sin huecos.
+  const PAGE1_OFFSET = 5; // featured(1) + sidebar(4)
+  const totalPages = Math.max(1, Math.ceil((gridArticles.length - PAGE1_OFFSET) / perPage) + 1);
   const currentPage = Math.min(Math.max(1, page), totalPages);
-
-  // Page 1 keeps the editorial layout (featured + sidebar + grid) totaling perPage items.
-  // Page 2+ shows a flat grid of `perPage` standard cards.
   const isFirstPage = currentPage === 1;
 
   let featured: Article | undefined;
@@ -57,11 +63,10 @@ export default function SectionPageLayout({
 
   if (isFirstPage) {
     featured = gridArticles[0];
-    // Sidebar gets the next 4, grid gets the rest up to perPage total.
-    sidebarItems = gridArticles.slice(1, 5);
-    gridItems = gridArticles.slice(5, perPage);
+    sidebarItems = gridArticles.slice(1, PAGE1_OFFSET);
+    gridItems = gridArticles.slice(PAGE1_OFFSET, PAGE1_OFFSET + perPage);
   } else {
-    const start = (currentPage - 1) * perPage;
+    const start = PAGE1_OFFSET + (currentPage - 2) * perPage;
     gridItems = gridArticles.slice(start, start + perPage);
   }
 
@@ -240,13 +245,13 @@ export default function SectionPageLayout({
               </span>
             </div>
 
-            {renderGridWithAds(gridItems, rectangleAds, sponsoredIds)}
+            {renderGridWithAds(gridItems, rectangleAds, sponsoredIds, sponsoredItems)}
           </>
         )}
 
         {/* Pages 2+ — flat grid of standard cards */}
         {!isFirstPage && gridItems.length > 0 && (
-          renderGridWithAds(gridItems, rectangleAds, sponsoredIds)
+          renderGridWithAds(gridItems, rectangleAds, sponsoredIds, sponsoredItems)
         )}
 
         {/* Pagination — comic noir */}
@@ -272,18 +277,21 @@ export default function SectionPageLayout({
   );
 }
 
-/** Render the "Más en {sección}" grid splitting items into chunks of 6,
- *  inserting a rectangle ad row after every 6 articles (both on page 1 and 2+). */
+/** Render the "Más en {sección}" grid splitting items into chunks of 8 articles,
+ *  followed by 1 SponsoredRotator (card que rota todos los patrocinados cada 15s).
+ *  8 + 1 = 9 = 3×3 → sin huecos en el grid de 3 cols. Después viene una fila de
+ *  3 rectangle ads. Sólo entre chunks (no al final del último). */
 function renderGridWithAds(
   items: Article[],
   rectangleAds: Ad[],
-  sponsoredIds: Set<string>
+  sponsoredIds: Set<string>,
+  sponsoredItems: Article[]
 ): React.ReactNode {
   if (items.length === 0) return null;
 
   const chunks: Article[][] = [];
-  for (let i = 0; i < items.length; i += 6) {
-    chunks.push(items.slice(i, i + 6));
+  for (let i = 0; i < items.length; i += 8) {
+    chunks.push(items.slice(i, i + 8));
   }
 
   return (
@@ -299,11 +307,18 @@ function renderGridWithAds(
                 sponsored={sponsoredIds.has(a.id)}
               />
             ))}
+            {/* SponsoredRotator como 9º item inline — rota todos los patrocinados cada 15s,
+                independiente de otros contenedores. Sólo entre chunks, no al final. */}
+            {idx < chunks.length - 1 && sponsoredItems.length > 0 && (
+              <SponsoredRotator sponsored={sponsoredItems} />
+            )}
           </div>
-          {/* Rectangle ad row after this 6-item chunk (except after the last one) */}
+          {/* Rectangle ad row después del chunk+rotator (excepto último chunk).
+              Siempre 3 slots aunque haya menos rectangles activos — AdRotator rota
+              entre los disponibles y rellena los slots vacíos. */}
           {idx < chunks.length - 1 && rectangleAds.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-              {rectangleAds.slice(0, 3).map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <div key={`rect-${idx}-${i}`}>
                   <AdRotator ads={rectangleAds} size="rectangle" />
                 </div>

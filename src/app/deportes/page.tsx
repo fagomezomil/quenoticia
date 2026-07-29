@@ -23,17 +23,6 @@ function sponsoredToArticle(s: SponsoredContent): Article {
   };
 }
 
-function interleaveSponsored(articles: Article[], sponsored: Article[]): Article[] {
-  if (sponsored.length === 0) return articles;
-  const result = [...articles];
-  const interval = Math.max(2, Math.floor(result.length / (sponsored.length + 1)));
-  sponsored.forEach((s, i) => {
-    const pos = Math.min(interval * (i + 1) + i, result.length);
-    result.splice(pos, 0, s);
-  });
-  return result;
-}
-
 export const revalidate = 300;
 
 interface Props {
@@ -52,10 +41,11 @@ export default async function DeportesPage({ searchParams }: Props) {
   ]);
 
   const sponsoredIds = new Set(sponsoredContent.map((s) => s.id));
-  const sectionArticles = interleaveSponsored(
-    [...customArticles, ...(apiArticles ?? getArticlesBySection("deportes"))],
-    sponsoredContent.map(sponsoredToArticle),
-  );
+  const sponsoredItems = sponsoredContent.map(sponsoredToArticle);
+  const sectionArticles = [
+    ...customArticles,
+    ...(apiArticles ?? getArticlesBySection("deportes")),
+  ];
   const leaderboardAds = ads.filter((a) => a.type === "leaderboard");
   const rectangleAds = ads.filter((a) => a.type === "rectangle");
 
@@ -68,6 +58,7 @@ export default async function DeportesPage({ searchParams }: Props) {
       leaderboardAds={leaderboardAds}
       rectangleAds={rectangleAds}
       sponsoredIds={sponsoredIds}
+      sponsoredItems={sponsoredItems}
       page={page}
     />
   );
