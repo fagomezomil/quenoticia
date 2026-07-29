@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { AgendaCategory } from "@/lib/types";
@@ -17,6 +17,8 @@ export default function SubmitEventForm({ userEmail }: { userEmail?: string | nu
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  // Honeypot: hidden field que bots llenan pero humanos no
+  const honeypotRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -40,6 +42,8 @@ export default function SubmitEventForm({ userEmail }: { userEmail?: string | nu
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Honeypot check: si el campo hidden tiene valor, es un bot — return silencioso
+    if (honeypotRef.current?.value) return;
     setError(null);
     setSuccess(null);
     startTransition(async () => {
@@ -109,6 +113,17 @@ export default function SubmitEventForm({ userEmail }: { userEmail?: string | nu
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Honeypot: invisible a humanos, bots auto-fill hidden fields */}
+      <input
+        type="text"
+        ref={honeypotRef}
+        name="website"
+        autoComplete="off"
+        tabIndex={-1}
+        aria-hidden="true"
+        className="absolute opacity-0 h-0 w-0 pointer-events-none"
+        style={{ position: "absolute", left: "-9999px" }}
+      />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-2">
           <label className={labelCls}>Título del evento *</label>
