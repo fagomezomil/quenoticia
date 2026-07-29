@@ -11,8 +11,42 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   images: {
+    // Acotado a los hostnames reales de las fuentes del scraper + Supabase
+    // Storage + medios replicados (ver src/lib/stats.ts REPLICATED_DOMAINS).
+    // Antes era hostname: "**" que dejaba _next/image como proxy abierto.
     remotePatterns: [
-      { protocol: "https", hostname: "**" },
+      // Supabase Storage (avatars, media/ads)
+      { protocol: "https", hostname: "uhuidlistqoonyqtpyvh.supabase.co" },
+      // 5 fuentes locales del scraper
+      { protocol: "https", hostname: "contextotucuman.com" },
+      { protocol: "https", hostname: "**.contextotucuman.com" },
+      { protocol: "https", hostname: "comunicaciontucuman.gob.ar" },
+      { protocol: "https", hostname: "**.comunicaciontucuman.gob.ar" },
+      { protocol: "https", hostname: "comunicacionsmt.gob.ar" },
+      { protocol: "https", hostname: "**.comunicacionsmt.gob.ar" },
+      { protocol: "https", hostname: "ambito.com" },
+      { protocol: "https", hostname: "**.ambito.com" },
+      { protocol: "https", hostname: "tycsports.com" },
+      { protocol: "https", hostname: "**.tycsports.com" },
+      // Medios replicados (REPLICATED_DOMAINS en src/lib/stats.ts)
+      { protocol: "https", hostname: "tn.com.ar" },
+      { protocol: "https", hostname: "**.tn.com.ar" },
+      { protocol: "https", hostname: "clarin.com" },
+      { protocol: "https", hostname: "**.clarin.com" },
+      { protocol: "https", hostname: "lanacion.com.ar" },
+      { protocol: "https", hostname: "**.lanacion.com.ar" },
+      { protocol: "https", hostname: "infobae.com" },
+      { protocol: "https", hostname: "**.infobae.com" },
+      { protocol: "https", hostname: "telam.com.ar" },
+      { protocol: "https", hostname: "**.telam.com.ar" },
+      { protocol: "https", hostname: "elliberal.com.ar" },
+      { protocol: "https", hostname: "**.elliberal.com.ar" },
+      { protocol: "https", hostname: "losprimerostucuman.com" },
+      { protocol: "https", hostname: "**.losprimerostucuman.com" },
+      { protocol: "https", hostname: "pagina12.com.ar" },
+      { protocol: "https", hostname: "**.pagina12.com.ar" },
+      { protocol: "https", hostname: "lagaceta.com.ar" },
+      { protocol: "https", hostname: "**.lagaceta.com.ar" },
     ],
   },
   // @resvg/resvg-js y sharp usan bindings nativos — deben quedar fuera del bundler.

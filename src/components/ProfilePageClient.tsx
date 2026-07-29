@@ -57,9 +57,17 @@ export default function ProfilePageClient({ likedArticles, favoritedArticles, us
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validar extensión contra allowlist para prevenir path traversal
+    // (file.name podría contener "../" o caracteres raros).
+    const ext = (file.name.split(".").pop() || "").toLowerCase();
+    const ALLOWED_EXTS = ["jpg", "jpeg", "png", "webp", "gif"];
+    if (!ALLOWED_EXTS.includes(ext)) {
+      alert("Formato no permitido. Usá JPG, PNG, WEBP o GIF.");
+      return;
+    }
+
     setUploading(true);
     const supabase = createClient();
-    const ext = file.name.split(".").pop();
     const path = `${user.id}/avatar.${ext}`;
 
     const { error: uploadError } = await supabase.storage
@@ -80,8 +88,10 @@ export default function ProfilePageClient({ likedArticles, favoritedArticles, us
   };
 
   const handleSaveName = async () => {
+    const trimmed = nameValue.trim();
+    if (trimmed.length === 0 || trimmed.length > 100) return;
     const supabase = createClient();
-    await supabase.from("profiles").update({ full_name: nameValue }).eq("id", user.id);
+    await supabase.from("profiles").update({ full_name: trimmed }).eq("id", user.id);
     await refreshProfile();
     setEditingName(false);
   };
@@ -138,6 +148,7 @@ export default function ProfilePageClient({ likedArticles, favoritedArticles, us
                   type="text"
                   value={nameValue}
                   onChange={(e) => setNameValue(e.target.value)}
+                  maxLength={100}
                   className="border border-border rounded px-3 py-1.5 text-sm"
                   autoFocus
                 />
