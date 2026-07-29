@@ -129,7 +129,9 @@ export async function submitComment(
     .single();
 
   if (error || !data) {
-    console.error("submitComment insert error:", error);
+    // Loguear solo code + message (no el error completo que podría mencionar
+    // el content del comment en constraint violations).
+    console.error("submitComment insert error:", error.code, error.message);
     return { ok: false, error: "Error al guardar el comentario" };
   }
 

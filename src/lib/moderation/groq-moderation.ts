@@ -106,7 +106,9 @@ export async function analyzeToxicity(text: string): Promise<ModerationResult | 
 
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
-      console.error("Groq moderation error:", res.status, errText);
+      // Truncar para no loguear potencial echo del prompt (content del comment)
+      // si Groq devolviera error con el input. Máximo 200 chars.
+      console.error("Groq moderation error:", res.status, errText.slice(0, 200));
       return { score: 0, flagged: false, categories: [], error: `HTTP ${res.status}` };
     }
 
