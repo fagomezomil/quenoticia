@@ -24,9 +24,13 @@ npm ci --no-audit --no-fund
 echo "=== build (output standalone) ==="
 npm run build
 
-echo "=== copy static + public to standalone ==="
+echo "=== copy static + public + assets/fonts to standalone ==="
 cp -r .next/static .next/standalone/.next/
 cp -r public .next/standalone/
+# Las fonts .woff usadas por src/lib/social/fonts.ts no se trazan automáticamente
+# en el standalone build — hay que copiarlas a mano para que generateSlidePng las encuentre.
+mkdir -p .next/standalone/src/assets/fonts
+cp -r src/assets/fonts/. .next/standalone/src/assets/fonts/
 
 echo "=== restart systemd service ==="
 sudo systemctl restart quenoticia
