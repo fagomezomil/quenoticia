@@ -4,8 +4,6 @@ import { useState, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import Turnstile from "@/components/Turnstile";
-import { loginUser } from "@/lib/actions/auth";
 
 function LoginCard() {
   const searchParams = useSearchParams();
@@ -16,7 +14,6 @@ function LoginCard() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState("");
   const router = useRouter();
 
   const handleGoogleLogin = async () => {
@@ -37,12 +34,33 @@ function LoginCard() {
     setLoading(true);
     setError("");
 
-    const result = await loginUser(email, password, turnstileToken);
+    const supabase = createClient();
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (!result.ok) {
-      setError(result.error || "Error al iniciar sesión");
+    if (authError) {
+      setError("Email o contraseña incorrectos");
       setLoading(false);
       return;
+    }
+
+    // Check if user is suspended
+    const { data: { user: loggedInUser } } = await supabase.auth.getUser();
+    if (loggedInUser) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", loggedInUser.id)
+        .single();
+
+      if (profile?.role === "suspended") {
+        await supabase.auth.signOut();
+        setError("Tu cuenta está suspendida. Contactá al administrador.");
+        setLoading(false);
+        return;
+      }
     }
 
     router.push(redirectTo);
@@ -101,11 +119,9 @@ function LoginCard() {
             <p className="text-sm text-[#e63946] text-center">{error}</p>
           )}
 
-          <Turnstile onToken={setTurnstileToken} className="min-h-[65px] flex items-center justify-center" />
-
           <button
             type="submit"
-            disabled={loading || !turnstileToken}
+            disabled={loading}
             className="w-full py-2.5 bg-ink text-white font-bold rounded hover:bg-ink/80 transition-colors disabled:opacity-50"
           >
             {loading ? "Ingresando..." : "Ingresar"}

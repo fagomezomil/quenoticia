@@ -1,26 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import Turnstile from "@/components/Turnstile";
-import { requestPasswordReset } from "@/lib/actions/auth";
 
 export default function RecuperarPasswordPage() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const result = await requestPasswordReset(email, turnstileToken);
+    const supabase = createClient();
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/actualizar-password`,
+    });
 
-    if (!result.ok) {
-      setError(result.error || "Error al enviar el email");
+    if (resetError) {
+      setError(resetError.message);
       setLoading(false);
       return;
     }
@@ -93,11 +94,9 @@ export default function RecuperarPasswordPage() {
                 <p className="text-sm text-[#e63946] text-center">{error}</p>
               )}
 
-              <Turnstile onToken={setTurnstileToken} className="min-h-[65px] flex items-center justify-center" />
-
               <button
                 type="submit"
-                disabled={loading || !turnstileToken}
+                disabled={loading}
                 className="w-full py-2.5 bg-ink text-white font-bold rounded hover:bg-ink/80 transition-colors disabled:opacity-50"
               >
                 {loading ? "Enviando..." : "Enviar instrucciones"}
