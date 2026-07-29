@@ -1,20 +1,15 @@
 import type { NextConfig } from "next";
 
-const securityHeaders = [
-  { key: "X-Frame-Options", value: "DENY" },
-  { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-];
-
-// Anti-scraping headers for article content: limit snippet size in search results
-const contentHeaders = [
-  ...securityHeaders,
+// X-Robots-Tag limita snippet size en search results para reducir valor de scraping.
+// Los headers de seguridad (HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy,
+// Permissions-Policy, CSP) los manda Caddy en el edge — acá solo dejamos X-Robots-Tag.
+const articleRobotsHeader = [
   { key: "X-Robots-Tag", value: "max-snippet:200, max-image-preview:small" },
 ];
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  poweredByHeader: false,
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**" },
@@ -25,13 +20,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       // Article pages: limited snippets to reduce scraping value
-      { source: "/politica/:path*", headers: contentHeaders },
-      { source: "/deportes/:path*", headers: contentHeaders },
-      { source: "/economia/:path*", headers: contentHeaders },
-      { source: "/internacionales/:path*", headers: contentHeaders },
-      { source: "/tucuman/:path*", headers: contentHeaders },
-      // All other pages: standard security headers
-      { source: "/(.*)", headers: securityHeaders },
+      { source: "/politica/:path*", headers: articleRobotsHeader },
+      { source: "/deportes/:path*", headers: articleRobotsHeader },
+      { source: "/economia/:path*", headers: articleRobotsHeader },
+      { source: "/internacionales/:path*", headers: articleRobotsHeader },
+      { source: "/tucuman/:path*", headers: articleRobotsHeader },
     ];
   },
 };

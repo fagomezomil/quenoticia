@@ -35,7 +35,9 @@ export async function proxy(request: NextRequest) {
   }
 
   // Rate limit auth endpoints (10 req/min per IP)
-  if (AUTH_ROUTES.some((route) => pathname === route)) {
+  // Excluir RSC prefetch (header RSC: 1) — son prefetch del framework, no intentos de auth.
+  const isRscPrefetch = request.headers.get("RSC") === "1";
+  if (!isRscPrefetch && AUTH_ROUTES.some((route) => pathname === route)) {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
       ?? request.headers.get("x-real-ip")
       ?? "unknown";
