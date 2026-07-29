@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
 import { syncAllSections } from "@/lib/sync-news";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  // Verify cron secret to prevent unauthorized access
-  const url = new URL(request.url);
-  const token = url.searchParams.get("token");
-  const secret = process.env.CRON_SECRET;
-
-  if (!secret || token !== secret) {
+  if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -21,7 +17,7 @@ export async function GET(request: Request) {
       errors: result.errors,
       details: result.details,
       timestamp: new Date().toISOString(),
-      note: "List sync only. Call /api/backfill-details?token=TOKEN to fill images/content.",
+      note: "List sync only. Call /api/backfill-details with X-Cron-Secret header to fill images/content.",
     });
   } catch (error) {
     console.error("Sync error:", error);

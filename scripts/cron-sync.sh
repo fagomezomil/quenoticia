@@ -19,9 +19,9 @@ ts() { date -Is; }
 echo "$(ts) === cron-sync start ===" >> "$LOG_FILE"
 
 for endpoint in sync-news backfill-details; do
-  url="${BASE_URL}/api/${endpoint}?token=${CRON_SECRET}"
+  url="${BASE_URL}/api/${endpoint}"
   echo "$(ts) GET $endpoint" >> "$LOG_FILE"
-  if response=$(curl -fsS --max-time 300 -w "\n[HTTP %{http_code} %{size_download}B %{time_total}s]" "$url" 2>&1); then
+  if response=$(curl -fsS --max-time 300 -H "X-Cron-Secret: ${CRON_SECRET}" -w "\n[HTTP %{http_code} %{size_download}B %{time_total}s]" "$url" 2>&1); then
     echo "$(ts) OK $endpoint: ${response##*$'\n'}" >> "$LOG_FILE"
   else
     echo "$(ts) FAIL $endpoint: $response" >> "$LOG_FILE"

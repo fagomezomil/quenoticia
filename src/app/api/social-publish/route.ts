@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { buildCarousel } from "@/lib/social/carousel-builder";
 import { bufferPublish } from "@/lib/social/buffer-client";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { verifyCronSecret } from "@/lib/cron-auth";
 import type { ChannelTarget } from "@/lib/social/daily-limits";
 
 export const dynamic = "force-dynamic";
@@ -9,20 +10,20 @@ export const maxDuration = 60;
 
 /** Endpoint cron: genera un carrusel de 5 noticias y lo publica via Buffer.
  *
+ *  Header:
+ *    - X-Cron-Secret: CRON_SECRET (obligatorio)
+ *
  *  Query params:
- *    - token: CRON_SECRET (obligatorio)
  *    - dry_run: "true" → genera y guarda en social_posts sin publicar a Buffer
  *
  *  Cron externo (Vercel Cron o crontab VPS DonWeb) dispara 2x/día a las 08:15 y 20:15 AR.
  *  Respeta DAILY_LIMITS por servicio (saltea canales que ya publicaron su cupo diario). */
 export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const token = url.searchParams.get("token");
-  const secret = process.env.CRON_SECRET;
-  if (!secret || token !== secret) {
+  if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const url = new URL(request.url);
   const dryRun = url.searchParams.get("dry_run") === "true";
   const bufferKey = process.env.BUFFER_API_KEY ?? "";
   const channelIds = (process.env.BUFFER_CHANNEL_IDS ?? "")

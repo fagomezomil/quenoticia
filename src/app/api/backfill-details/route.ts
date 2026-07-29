@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
 import { backfillDetails } from "@/lib/sync-news";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const token = url.searchParams.get("token");
-  const secret = process.env.CRON_SECRET;
-
-  if (!secret || token !== secret) {
+  if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
