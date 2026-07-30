@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Cron de publicacion a STORIES IG/FB - 2x/dia (15:00 y 21:00 ART)
 # Lee CRON_SECRET de .env.production para no hardcodearlo en crontab.
-# --max-time 240 es critico: la generacion de 10 slides 9:16 con Satori + Resvg
-# puede tardar 60-120s de CPU en el VPS, mas 10 createPost a Buffer (uno por slide
-# por canal IG+FB) que pueden sumar otros 30-60s.
+# --max-time 480: con MP4 (ffmpeg 15s por slide x10 + upload a Supabase + 10 createPost
+# a Buffer x2 canales IG+FB) el render completo tarda ~290s. 480s da margen para picos
+# de carga en el VPS sin que curl corte el request.
 set -euo pipefail
 
 ENV_FILE="/opt/quenoticia/.env.production"
@@ -22,7 +22,7 @@ ts() { date -Is; }
 echo "$(ts) === cron-stories start ===" >> "$LOG_FILE"
 
 url="${BASE_URL}/api/social-publish-stories"
-if response=$(curl -fsS --max-time 240 -H "X-Cron-Secret: ${CRON_SECRET}" -w "\n[HTTP %{http_code} %{time_total}s]" "$url" 2>&1); then
+if response=$(curl -fsS --max-time 480 -H "X-Cron-Secret: ${CRON_SECRET}" -w "\n[HTTP %{http_code} %{time_total}s]" "$url" 2>&1); then
   echo "$(ts) OK: ${response##*$'\n'}" >> "$LOG_FILE"
   echo "$(ts) BODY: ${response%$'\n'*[HTTP *}" >> "$LOG_FILE"
 else
