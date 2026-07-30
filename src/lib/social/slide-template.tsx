@@ -436,7 +436,7 @@ export function SlideTemplateStory({
           display: "flex",
           fontFamily: "Oswald",
           fontWeight: 700,
-          fontSize: 60,
+          fontSize: 70,
           lineHeight: 1.1,
           color: "#0a0a0a",
         },
