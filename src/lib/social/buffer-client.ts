@@ -311,7 +311,9 @@ export async function bufferPublishStories(
         channelId,
         schedulingType: "automatic",
         mode: "shareNow",
-        assets: [{ image: { url: slide.url } }],
+        // Stories ahora son MP4 15s con audio trending — Buffer espera `video` asset.
+        // Antes era `{ image: { url } }` con PNG estático.
+        assets: [{ video: { url: slide.url } }],
       };
       if (Object.keys(metadata).length > 0) input.metadata = metadata;
 

@@ -1,8 +1,13 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { selectNotesForCarousel, selectNotesForStories, type SelectedNote } from "./select-notes";
 import { generateSlidePng, generateStoryPng } from "./generate-slide";
+import { renderStoryMp4 } from "./render-story-mp4";
 import { buildCaption } from "./caption-builder";
 import type { Section } from "@/lib/types";
+
+// Concurrency de renders MP4 — ffmpeg es CPU-intensivo. VPS tiene 4 vCPU,
+// 10 renders en paralelo saturan. Limitamos a 3 para no matar la app.
+const MP4_RENDER_CONCURRENCY = 3;
 
 export interface CarouselResult {
   notes: (SelectedNote | null)[];
@@ -51,23 +56,42 @@ async function uploadSlidePng(png: Buffer, section: string, timestamp: number): 
   return data.publicUrl;
 }
 
-/** Sube un PNG 9:16 al bucket `media` con path `social/stories-{timestamp}-{section}-{n}.png`
+/** Sube un MP4 9:16 15s al bucket `media` con path `social/stories-{timestamp}-{section}-{n}.mp4`
  *  y devuelve la URL pública. */
-async function uploadStoryPng(
-  png: Buffer,
+async function uploadStoryMp4(
+  mp4: Buffer,
   section: string,
   n: number,
   timestamp: number,
 ): Promise<string> {
   const admin = await getSupabaseAdmin();
-  const path = `social/stories-${timestamp}-${section}-${n}.png`;
-  const { error } = await admin.storage.from("media").upload(path, png, {
-    contentType: "image/png",
+  const path = `social/stories-${timestamp}-${section}-${n}.mp4`;
+  const { error } = await admin.storage.from("media").upload(path, mp4, {
+    contentType: "video/mp4",
     upsert: true,
   });
-  if (error) throw new Error(`upload story ${path}: ${error.message}`);
+  if (error) throw new Error(`upload story mp4 ${path}: ${error.message}`);
   const { data } = admin.storage.from("media").getPublicUrl(path);
   return data.publicUrl;
+}
+
+/** Run async tasks with bounded concurrency (para no saturar CPU con 10 ffmpeg en paralelo). */
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (true) {
+      const i = next++;
+      if (i >= items.length) break;
+      results[i] = await fn(items[i], i);
+    }
+  });
+  await Promise.all(workers);
+  return results;
 }
 
 /** Orquesta: select → generate slides → upload → caption.
@@ -121,9 +145,12 @@ export async function buildStories(since: Date): Promise<StoriesResult> {
     n ? n.section : ("politica" as Section),
   );
 
-  // Generar slides 9:16 en paralelo (hasta 10)
-  const slideResults = await Promise.all(
-    notes.map(async (note, i): Promise<string | null> => {
+  // Generar stories 9:16 con audio: PNG → render MP4 15s (ffmpeg + MP3 trending) → upload MP4.
+  // Concurrency limitada porque ffmpeg es CPU-intensivo (4 vCPU VPS).
+  const slideResults = await mapWithConcurrency(
+    notes,
+    MP4_RENDER_CONCURRENCY,
+    async (note, i): Promise<string | null> => {
       if (!note || !note.title) return null;
       try {
         const imageDataUrl = note.image_url ?? "";
@@ -135,13 +162,13 @@ export async function buildStories(since: Date): Promise<StoriesResult> {
           dateLabel: formatDateLabel(note.created_at),
           sourceLabel: note.author ?? undefined,
         });
-        // n = i+1 (1..10) para distinguir las 2 de cada sección
-        return await uploadStoryPng(png, note.section, i + 1, timestamp);
+        const mp4 = await renderStoryMp4(png);
+        return await uploadStoryMp4(mp4, note.section, i + 1, timestamp);
       } catch (err) {
-        console.error(`buildStories: slide falló para ${note.section} #${i + 1}:`, err);
+        console.error(`buildStories: story falló para ${note.section} #${i + 1}:`, err);
         return null;
       }
-    }),
+    },
   );
 
   const slideImageUrls = slideResults.filter((u): u is string => u !== null);
