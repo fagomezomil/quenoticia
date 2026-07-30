@@ -38,6 +38,9 @@ export interface SlideData {
 const WIDTH = 1080;
 const HEIGHT = 1350;
 
+export const STORY_WIDTH = 1080;
+export const STORY_HEIGHT = 1920;
+
 const HALFTONE_BG =
   "radial-gradient(circle, rgba(10,10,10,0.18) 1px, transparent 1.5px)";
 const HALFTONE_BG_LIGHT =
@@ -50,6 +53,15 @@ function fitTitle(title: string): string {
   const cut = clean.slice(0, 107);
   const lastSpace = cut.lastIndexOf(" ");
   return cut.slice(0, lastSpace > 80 ? lastSpace : 107) + "…";
+}
+
+/** Trunca el título para story (9:16) — más espacio vertical, hasta 140 chars. */
+function fitTitleStory(title: string): string {
+  const clean = title.replace(/\s+/g, " ").trim();
+  if (clean.length <= 140) return clean;
+  const cut = clean.slice(0, 137);
+  const lastSpace = cut.lastIndexOf(" ");
+  return cut.slice(0, lastSpace > 100 ? lastSpace : 137) + "…";
 }
 
 /** Bajada de hasta 350 chars a partir del excerpt. */
@@ -331,6 +343,226 @@ export function SlideTemplate({
             },
           },
           dateLabel ?? "",
+        ),
+      ),
+    ),
+  );
+}
+
+/** Template JSX del slide Story 1080×1920 (9:16) para IG/FB stories.
+ *  Layout vertical: imagen full-bleed arriba (1080×1200), chip overlay,
+ *  título Oswald grande, bajada, footer con logo. Sin fecha/source (es efímero). */
+export function SlideTemplateStory({
+  title,
+  section,
+  imageDataUrl,
+  logoDataUrl,
+  excerpt,
+}: SlideData) {
+  const cfg = sectionConfig[section];
+  const chipLabel = cfg.label.toUpperCase();
+  const chipColor = cfg.color;
+  const fit = fitTitleStory(title);
+  const bajada = fitExcerpt(excerpt);
+
+  return React.createElement(
+    "div",
+    {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        width: STORY_WIDTH,
+        height: STORY_HEIGHT,
+        backgroundColor: "#ffffff",
+        fontFamily: "Inter",
+        position: "relative",
+      },
+    },
+    // Halftone sutil top-right (sobre la imagen)
+    React.createElement("div", {
+      style: {
+        position: "absolute",
+        top: 0,
+        right: 0,
+        width: 400,
+        height: 240,
+        backgroundImage: HALFTONE_BG_LIGHT,
+        backgroundSize: "8px 8px",
+        zIndex: 2,
+      },
+    }),
+    // Imagen full-bleed arriba (1080×1200) con hard shadow
+    React.createElement(
+      "div",
+      {
+        style: {
+          display: "flex",
+          position: "relative",
+          width: "100%",
+          height: 1200,
+        },
+      },
+      React.createElement("img", {
+        src: imageDataUrl,
+        style: {
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+        },
+      }),
+      // Overlay degradado abajo para que el chip resalte
+      React.createElement("div", {
+        style: {
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 200,
+          background:
+            "linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0))",
+        },
+      }),
+      // Chip de sección sobre la imagen, bottom-left
+      React.createElement(
+        "div",
+        {
+          style: {
+            position: "absolute",
+            bottom: 40,
+            left: 50,
+            display: "flex",
+            backgroundColor: chipColor,
+            color: "#ffffff",
+            fontFamily: "Oswald",
+            fontWeight: 700,
+            fontSize: 28,
+            letterSpacing: 2,
+            padding: "8px 20px",
+            textTransform: "uppercase",
+          },
+        },
+        chipLabel,
+      ),
+    ),
+    // Área de texto (720px de alto: 1920 - 1200)
+    React.createElement(
+      "div",
+      {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          padding: "44px 50px 36px",
+          flex: 1,
+        },
+      },
+      // Título grande Oswald 72px
+      React.createElement(
+        "div",
+        {
+          style: {
+            display: "flex",
+            fontFamily: "Oswald",
+            fontWeight: 700,
+            fontSize: 72,
+            lineHeight: 1.1,
+            color: "#0a0a0a",
+            marginBottom: 24,
+          },
+        },
+        fit,
+      ),
+      // Bajada
+      bajada &&
+      React.createElement(
+        "div",
+        {
+          style: {
+            display: "flex",
+            fontFamily: "Inter",
+            fontWeight: 400,
+            fontSize: 26,
+            lineHeight: 1.4,
+            color: "#6b5d4f",
+          },
+        },
+        bajada,
+      ),
+      // Espaciador
+      React.createElement("div", { style: { flex: 1 } }),
+      // Halftone divider
+      React.createElement("div", {
+        style: {
+          width: "100%",
+          height: 10,
+          backgroundImage: HALFTONE_BG,
+          backgroundSize: "6px 6px",
+          marginBottom: 18,
+        },
+      }),
+      // Footer: logo + URL
+      React.createElement(
+        "div",
+        {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+          },
+        },
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              flexDirection: "column",
+            },
+          },
+          logoDataUrl
+            ? React.createElement("img", {
+              src: logoDataUrl,
+              style: {
+                display: "flex",
+                height: 90,
+                width: "auto",
+                objectFit: "contain",
+              },
+            })
+            : React.createElement(
+              "div",
+              {
+                style: {
+                  fontFamily: "Oswald",
+                  fontWeight: 700,
+                  fontSize: 28,
+                  color: "#0a0a0a",
+                  letterSpacing: 1,
+                },
+              },
+              "¡QUE NOTICIA!",
+            ),
+        ),
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              fontFamily: "Oswald",
+              fontWeight: 600,
+              fontSize: 22,
+              letterSpacing: 0.5,
+            },
+          },
+          React.createElement(
+            "span",
+            { style: { color: "#f97316" } },
+            "que",
+          ),
+          React.createElement(
+            "span",
+            { style: { color: "#0a0a0a" } },
+            "noticia.com.ar",
+          ),
         ),
       ),
     ),

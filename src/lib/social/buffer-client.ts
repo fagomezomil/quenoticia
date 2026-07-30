@@ -212,3 +212,136 @@ export async function bufferPublish(
     error: allOk ? undefined : "algunos canales fallaron (ver channelTargets)",
   };
 }
+
+/** Publica N stories (1 createPost por slide por canal) a IG/FB.
+ *  - slides: array de { url, caption } — cada slide se publica como story independiente.
+ *  - channelIds: lista de channel IDs destino. Si vacío, usa todos los descubiertos.
+ *  - Respet DAILY_LIMITS_STORIES por servicio.
+ *  - TikTok: skip (no soporta stories).
+ *  - IG: metadata.instagram.type = "story", shouldShareToFeed: false
+ *  - FB: metadata.facebook.type = "story" */
+export async function bufferPublishStories(
+  accessToken: string,
+  channelIds: string[],
+  slides: Array<{ url: string; caption: string }>,
+): Promise<BufferPublishResult> {
+  if (!accessToken) return { success: false, channelTargets: [], skippedByLimit: [], error: "BUFFER_API_KEY no configurada" };
+  if (slides.length === 0) return { success: false, channelTargets: [], skippedByLimit: [], error: "Sin slides para publicar" };
+
+  // Descubrir canales
+  let channels: BufferChannel[] = [];
+  try {
+    channels = await listChannels(accessToken);
+  } catch (err) {
+    return { success: false, channelTargets: [], skippedByLimit: [], error: `listChannels: ${String(err)}` };
+  }
+
+  let targets = channelIds;
+  if (targets.length === 0) {
+    targets = channels.map((c) => c.id);
+  }
+  if (targets.length === 0) return { success: false, channelTargets: [], skippedByLimit: [], error: "Sin canales conectados" };
+
+  // Filtrar canales que no soportan stories (tiktok)
+  const channelsById = new Map(channels.map((c) => [c.id, c]));
+  const storySupported: string[] = [];
+  const skippedByService: Array<{ channelId: string; service: string; reason: string }> = [];
+  for (const channelId of targets) {
+    const channel = channelsById.get(channelId);
+    const service = channel?.service ?? "";
+    if (service === "tiktok") {
+      skippedByService.push({ channelId, service, reason: "TikTok no soporta stories" });
+    } else if (service !== "instagram" && service !== "facebook") {
+      skippedByService.push({ channelId, service, reason: `${service} no soporta stories (solo IG/FB)` });
+    } else {
+      storySupported.push(channelId);
+    }
+  }
+
+  // Daily limits stories
+  const dailyCounts = await getDailyChannelCounts("stories");
+  const skippedByLimit: Array<{ channelId: string; service: string; reason: string }> = [];
+  const allowedTargets: string[] = [];
+  for (const channelId of storySupported) {
+    const channel = channelsById.get(channelId);
+    const service = channel?.service ?? "";
+    const check = canPublishToChannel(channelId, service, dailyCounts, "stories");
+    if (check.allowed) {
+      allowedTargets.push(channelId);
+    } else {
+      skippedByLimit.push({ channelId, service, reason: check.reason ?? "límite alcanzado" });
+    }
+  }
+
+  if (allowedTargets.length === 0) {
+    return {
+      success: false,
+      channelTargets: [],
+      skippedByLimit: [...skippedByService, ...skippedByLimit],
+      error: "Sin canales disponibles para stories",
+    };
+  }
+
+  const mutation = `mutation CreatePost($input: CreatePostInput!) {
+    createPost(input: $input) {
+      ... on PostActionSuccess { post { id } }
+      ... on MutationError { message }
+    }
+  }`;
+
+  const channelTargets: ChannelTarget[] = [];
+  let allOk = true;
+
+  // Para cada canal, publicar cada slide como story independiente
+  for (const channelId of allowedTargets) {
+    const channel = channelsById.get(channelId);
+    const service = channel?.service ?? "";
+
+    // Metadata service-specific para stories
+    const metadata: Record<string, unknown> = {};
+    if (service === "instagram") {
+      metadata.instagram = { type: "story", shouldShareToFeed: false };
+    } else if (service === "facebook") {
+      metadata.facebook = { type: "story" };
+    }
+
+    for (const slide of slides) {
+      const input: Record<string, unknown> = {
+        text: slide.caption,
+        channelId,
+        schedulingType: "automatic",
+        mode: "shareNow",
+        assets: [{ image: { url: slide.url } }],
+      };
+      if (Object.keys(metadata).length > 0) input.metadata = metadata;
+
+      try {
+        const data = await gql<{
+          createPost: { post?: { id: string }; message?: string } | null;
+        }>(accessToken, mutation, { input });
+        const result = data.createPost;
+        if (result?.post?.id) {
+          channelTargets.push({ channelId, service, postId: result.post.id, error: null });
+        } else {
+          channelTargets.push({
+            channelId,
+            service,
+            postId: null,
+            error: result?.message ?? "error desconocido",
+          });
+          allOk = false;
+        }
+      } catch (err) {
+        channelTargets.push({ channelId, service, postId: null, error: String(err) });
+        allOk = false;
+      }
+    }
+  }
+
+  return {
+    success: allOk,
+    channelTargets,
+    skippedByLimit: [...skippedByService, ...skippedByLimit],
+    error: allOk ? undefined : "algunas stories fallaron (ver channelTargets)",
+  };
+}

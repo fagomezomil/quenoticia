@@ -9,6 +9,8 @@ import {
   publishArticle,
   publishEvent,
   deleteSocialPost,
+  publishStoriesNow,
+  triggerStoriesDryRun,
 } from "@/app/admin/redes/actions";
 import { AGENDA_COLORS, AGENDA_LABELS } from "@/lib/social/slide-template";
 
@@ -22,7 +24,7 @@ interface PostRow {
   caption: string;
   buffer_update_ids: string[] | null;
   status: "pending" | "published" | "failed" | "skipped";
-  kind: "nota" | "evento";
+  kind: "nota" | "evento" | "carrusel" | "stories";
   error_message: string | null;
   created_at: string;
 }
@@ -149,6 +151,34 @@ export default function RedesDashboard({ posts, articles, events, channels, conf
     });
   };
 
+  const handleStoriesDryRun = () => {
+    startTransition(async () => {
+      const r = await triggerStoriesDryRun();
+      showToast(
+        r.success
+          ? `Generadas ${r.slides} stories (9:16) en dry-run`
+          : `Error: ${r.error}`,
+      );
+    });
+  };
+
+  const handlePublishStories = () => {
+    if (
+      !confirm(
+        "¿Publicar 10 stories ahora? Va a postear 10 stories (5 secciones × 2) a FB + IG reales.",
+      )
+    )
+      return;
+    startTransition(async () => {
+      const r = await publishStoriesNow();
+      showToast(
+        r.success
+          ? `Publicadas ${r.slides} stories a Buffer (IG+FB)`
+          : `Error: ${r.error ?? "falló la publicación de stories"}`,
+      );
+    });
+  };
+
   const handleDelete = (postId: string) => {
     if (!confirm("¿Eliminar este registro del historial?")) return;
     startTransition(async () => {
@@ -209,7 +239,8 @@ export default function RedesDashboard({ posts, articles, events, channels, conf
           Redes — Publicación automática
         </h1>
         <p className="text-sm text-muted mt-1">
-          Carrusel de 5 noticias (1 por sección) publicado a FB + IG + TikTok via Buffer, 2×/día.
+          Carrusel al feed (5 slides cuadrados, 1 por sección) a las 09:00 y 20:30 + Stories
+          IG/FB (10 slides 9:16, 2 por sección) a las 15:00 y 21:00, vía Buffer.
         </p>
       </header>
 
@@ -249,7 +280,21 @@ export default function RedesDashboard({ posts, articles, events, channels, conf
           disabled={pending}
           className="px-4 py-2 bg-brand text-white text-sm font-bold rounded hover:bg-brand/80 disabled:opacity-50"
         >
-          Publicar ahora a Buffer
+          Publicar carrusel al feed
+        </button>
+        <button
+          onClick={handleStoriesDryRun}
+          disabled={pending}
+          className="px-4 py-2 bg-ink text-white text-sm font-bold rounded hover:bg-ink/80 disabled:opacity-50"
+        >
+          Generar stories (dry-run)
+        </button>
+        <button
+          onClick={handlePublishStories}
+          disabled={pending}
+          className="px-4 py-2 bg-brand text-white text-sm font-bold rounded hover:bg-brand/80 disabled:opacity-50"
+        >
+          Publicar 10 stories a IG+FB
         </button>
       </div>
 
@@ -603,6 +648,16 @@ function PostCard({
             {post.kind === "evento" && (
               <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded bg-ink">
                 Evento
+              </span>
+            )}
+            {post.kind === "carrusel" && (
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded bg-ink/80">
+                Carrusel feed
+              </span>
+            )}
+            {post.kind === "stories" && (
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase text-white rounded bg-urgente">
+                Stories 9:16
               </span>
             )}
             {post.sections.map((s, i) => {

@@ -1,11 +1,11 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
-/** Límites diarios por servicio (platform-side, para evitar ban). */
+/** Límites diarios por servicio (platform-side, para evitar ban).
+ *  Feed = publicaciones al feed (carrusel, publishArticle, publishEvent). */
 export const DAILY_LIMITS: Record<string, number> = {
   instagram: 6,
   facebook: 6,
   tiktok: 3,
-  // Defaults conservadores para servicios no listados
   twitter: 6,
   threads: 6,
   bluesky: 6,
@@ -15,6 +15,18 @@ export const DAILY_LIMITS: Record<string, number> = {
   mastodon: 6,
   google: 6,
 };
+
+/** Alias para feed (mantener DAILY_LIMITS como alias por compat con callers existentes). */
+export const DAILY_LIMITS_FEED = DAILY_LIMITS;
+
+/** Límites diarios para stories (quota aparte en Buffer). */
+export const DAILY_LIMITS_STORIES: Record<string, number> = {
+  instagram: 25,
+  facebook: 25,
+  // TikTok no soporta stories, se saltea
+};
+
+export type PublishKind = "feed" | "stories";
 
 export interface ChannelTarget {
   channelId: string;
@@ -32,18 +44,31 @@ export interface DailyCount {
 }
 
 /** Cuenta cuántos posts se mandaron a cada canal hoy (desde 00:00 UTC del día actual).
+ *  - kind="feed" (default): cuenta rows con kind IN ('nota', 'evento', 'carrusel').
+ *  - kind="stories": cuenta rows con kind='stories'.
  *  Considera sólo posts con status='published' o 'pending' (scheduled).
  *  No cuenta los 'failed' ni 'skipped'. */
-export async function getDailyChannelCounts(): Promise<Map<string, number>> {
+export async function getDailyChannelCounts(
+  kind: PublishKind = "feed",
+): Promise<Map<string, number>> {
   const admin = await getSupabaseAdmin();
   const startOfDay = new Date();
   startOfDay.setUTCHours(0, 0, 0, 0);
 
-  const { data } = await admin
+  let query = admin
     .from("social_posts")
-    .select("channel_targets, status")
+    .select("channel_targets, status, kind")
     .in("status", ["published", "pending"])
     .gte("scheduled_at", startOfDay.toISOString());
+
+  if (kind === "stories") {
+    query = query.eq("kind", "stories");
+  } else {
+    // Feed: nota, evento, carrusel (todos los kind que NO sean stories)
+    query = query.neq("kind", "stories");
+  }
+
+  const { data } = await query;
 
   const counts = new Map<string, number>();
   for (const row of data ?? []) {
@@ -57,19 +82,23 @@ export async function getDailyChannelCounts(): Promise<Map<string, number>> {
   return counts;
 }
 
-/** Dado un channelId y su service, devuelve si se puede publicar (no se pasó del límite). */
+/** Dado un channelId, su service y el kind, devuelve si se puede publicar. */
 export function canPublishToChannel(
   channelId: string,
   service: string,
   dailyCounts: Map<string, number>,
+  kind: PublishKind = "feed",
 ): { allowed: boolean; reason?: string; remaining: number } {
   const count = dailyCounts.get(channelId) ?? 0;
-  const limit = DAILY_LIMITS[service] ?? 6;
+  const limit =
+    kind === "stories"
+      ? (DAILY_LIMITS_STORIES[service] ?? 25)
+      : (DAILY_LIMITS[service] ?? 6);
   const remaining = limit - count;
   if (count >= limit) {
     return {
       allowed: false,
-      reason: `${service} ya publicó ${count}/${limit} hoy — límite diario alcanzado`,
+      reason: `${service} ya publicó ${count}/${limit} (${kind}) hoy — límite diario alcanzado`,
       remaining: 0,
     };
   }

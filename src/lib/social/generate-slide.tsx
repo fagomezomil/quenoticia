@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadFonts } from "./fonts";
-import { SlideTemplate, type SlideData } from "./slide-template";
+import { SlideTemplate, SlideTemplateStory, STORY_WIDTH, STORY_HEIGHT, type SlideData } from "./slide-template";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LOGO_PATH = join(__dirname, "..", "..", "..", "public", "logo", "logodesktop.png");
@@ -90,6 +90,55 @@ export async function generateSlidePng(data: SlideData): Promise<Buffer> {
 
   const resvg = new Resvg(svg, {
     fitTo: { mode: "width", value: WIDTH },
+    background: "#ffffff",
+  });
+  const pngData = resvg.render();
+  return pngData.asPng();
+}
+
+/** Genera un PNG 1080×1920 (9:16) para stories IG/FB.
+ *  Misma pipeline pero con SlideTemplateStory y dimensiones verticales. */
+export async function generateStoryPng(data: SlideData): Promise<Buffer> {
+  const fonts = await loadFonts();
+  const logoDataUrl = await loadLogo();
+
+  let imageDataUrl = data.imageDataUrl;
+  if (!imageDataUrl || imageDataUrl.trim() === "") {
+    imageDataUrl =
+      "data:image/svg+xml;base64," +
+      Buffer.from(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1200"><rect width="100%" height="100%" fill="#f5efe4"/></svg>`,
+      ).toString("base64");
+  } else if (imageDataUrl.startsWith("http")) {
+    try {
+      imageDataUrl = await fetchImageAsDataUrl(imageDataUrl);
+    } catch (err) {
+      console.error("generateStoryPng: no se pudo descargar portada, fallback sin imagen:", err);
+      imageDataUrl =
+        "data:image/svg+xml;base64," +
+        Buffer.from(
+          `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1200"><rect width="100%" height="100%" fill="#f5efe4"/></svg>`,
+        ).toString("base64");
+    }
+  }
+
+  const svg = await satori(
+    <SlideTemplateStory
+      title={data.title}
+      section={data.section}
+      imageDataUrl={imageDataUrl}
+      logoDataUrl={logoDataUrl}
+      excerpt={data.excerpt}
+    />,
+    {
+      width: STORY_WIDTH,
+      height: STORY_HEIGHT,
+      fonts,
+    },
+  );
+
+  const resvg = new Resvg(svg, {
+    fitTo: { mode: "width", value: STORY_WIDTH },
     background: "#ffffff",
   });
   const pngData = resvg.render();

@@ -3,8 +3,8 @@
 import { createClient, requireAdminAction } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
-import { buildCarousel } from "@/lib/social/carousel-builder";
-import { bufferPublish } from "@/lib/social/buffer-client";
+import { buildCarousel, buildStories } from "@/lib/social/carousel-builder";
+import { bufferPublish, bufferPublishStories } from "@/lib/social/buffer-client";
 import { AGENDA_COLORS, AGENDA_LABELS } from "@/lib/social/slide-template";
 import { buildEventCaption } from "@/lib/social/caption-builder";
 import type { ChannelTarget } from "@/lib/social/daily-limits";
@@ -140,6 +140,7 @@ export async function triggerNewPostDryRun() {
   const admin = await getSupabaseAdmin();
   const { error } = await admin.from("social_posts").insert({
     status: "pending",
+    kind: "carrusel",
     article_ids: carousel.articleIds,
     sections: carousel.sections,
     slide_image_urls: carousel.slideImageUrls,
@@ -174,6 +175,7 @@ export async function publishNow() {
     const admin = await getSupabaseAdmin();
     await admin.from("social_posts").insert({
       status: "pending",
+      kind: "carrusel",
       article_ids: carousel.articleIds,
       sections: carousel.sections,
       slide_image_urls: carousel.slideImageUrls,
@@ -193,6 +195,7 @@ export async function publishNow() {
   const admin = await getSupabaseAdmin();
   const { error } = await admin.from("social_posts").insert({
     status,
+    kind: "carrusel",
     article_ids: carousel.articleIds,
     sections: carousel.sections,
     slide_image_urls: carousel.slideImageUrls,
@@ -436,4 +439,98 @@ export async function deleteSocialPost(postId: string) {
   const { error } = await supabase.from("social_posts").delete().eq("id", postId);
   if (error) throw new Error(`No se pudo eliminar: ${error.message}`);
   revalidatePath("/admin/redes");
+}
+
+/** Publicar stories ahora mismo (real, no dry-run). Genera 10 slides 9:16
+ *  (2 por sección) y los publica como stories IG/FB vía Buffer. */
+export async function publishStoriesNow() {
+  await requireAdminAction();
+  const since = new Date(Date.now() - 12 * 60 * 60 * 1000);
+  const stories = await buildStories(since);
+
+  if (stories.slideImageUrls.length === 0) {
+    return { success: false, error: "Sin notas para publicar stories" };
+  }
+
+  const bufferKey = process.env.BUFFER_API_KEY ?? "";
+  const channelIds = (process.env.BUFFER_CHANNEL_IDS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (!bufferKey) {
+    const admin = await getSupabaseAdmin();
+    await admin.from("social_posts").insert({
+      status: "pending",
+      kind: "stories",
+      article_ids: stories.articleIds,
+      sections: stories.sections,
+      slide_image_urls: stories.slideImageUrls,
+      caption: "Stories automáticas 9:16 (10 slides, 2 por sección)",
+      channel_targets: [],
+      error_message: "BUFFER_API_KEY no configurada",
+    });
+    return { success: false, error: "Falta BUFFER_API_KEY" };
+  }
+
+  const slideEntries = stories.slideImageUrls.map((url, i) => ({
+    url,
+    caption: `¡QUE NOTICIA! ${["#Politica", "#Deportes", "#Tucuman", "#Economia", "#Internacionales"][i % 5]}\n\nLas noticias más importantes de Tucumán y el mundo. Lee más en quenoticia.com.ar`,
+  }));
+
+  const result = await bufferPublishStories(bufferKey, channelIds, slideEntries);
+  const status: "published" | "failed" = result.success ? "published" : "failed";
+  const bufferUpdateIds = (result.channelTargets ?? [])
+    .map((t) => t.postId)
+    .filter((id): id is string => id !== null);
+
+  const admin = await getSupabaseAdmin();
+  const { error } = await admin.from("social_posts").insert({
+    status,
+    kind: "stories",
+    article_ids: stories.articleIds,
+    sections: stories.sections,
+    slide_image_urls: stories.slideImageUrls,
+    caption: "Stories automáticas 9:16 (10 slides, 2 por sección)",
+    channel_targets: result.channelTargets ?? [],
+    buffer_update_ids: bufferUpdateIds.length > 0 ? bufferUpdateIds : null,
+    error_message: result.success ? null : result.error ?? null,
+    published_at: result.success ? new Date().toISOString() : null,
+  });
+
+  if (error) throw new Error(`No se pudo guardar: ${error.message}`);
+  revalidatePath("/admin/redes");
+  return {
+    success: result.success,
+    slides: stories.slideImageUrls.length,
+    skippedByLimit: result.skippedByLimit ?? [],
+    error: result.success ? undefined : result.error,
+  };
+}
+
+/** Generar stories en dry-run (guarda sin publicar). */
+export async function triggerStoriesDryRun() {
+  await requireAdminAction();
+  const since = new Date(Date.now() - 12 * 60 * 60 * 1000);
+  const stories = await buildStories(since);
+
+  if (stories.slideImageUrls.length === 0) {
+    return { success: false, error: "Sin notas para stories" };
+  }
+
+  const admin = await getSupabaseAdmin();
+  const { error } = await admin.from("social_posts").insert({
+    status: "pending",
+    kind: "stories",
+    article_ids: stories.articleIds,
+    sections: stories.sections,
+    slide_image_urls: stories.slideImageUrls,
+    caption: "Stories automáticas 9:16 (10 slides, 2 por sección) — dry-run",
+    channel_targets: [],
+    error_message: "Generado en dry-run — pendiente de publicación manual o cron",
+  });
+
+  if (error) throw new Error(`No se pudo guardar: ${error.message}`);
+  revalidatePath("/admin/redes");
+  return { success: true, slides: stories.slideImageUrls.length };
 }
