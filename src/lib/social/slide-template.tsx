@@ -351,14 +351,13 @@ export function SlideTemplate({
 
 /** Template JSX del slide Story 1080×1920 (9:16) para IG/FB stories.
  *  Layout vertical: imagen full-bleed arriba (1080×1200), chip overlay,
- *  título Oswald grande, bajada, footer con logo + web + fuente + fecha
+ *  título Oswald grande (sin bajada), footer con logo + web + fuente + fecha
  *  (mismo footer que el carrusel del feed). */
 export function SlideTemplateStory({
   title,
   section,
   imageDataUrl,
   logoDataUrl,
-  excerpt,
   dateLabel,
   sourceLabel,
 }: SlideData) {
@@ -366,7 +365,6 @@ export function SlideTemplateStory({
   const chipLabel = cfg.label.toUpperCase();
   const chipColor = cfg.color;
   const fit = fitTitleStory(title);
-  const bajada = fitExcerpt(excerpt);
 
   return React.createElement(
     "div",
@@ -381,20 +379,7 @@ export function SlideTemplateStory({
         position: "relative",
       },
     },
-    // Halftone sutil top-right (sobre la imagen)
-    React.createElement("div", {
-      style: {
-        position: "absolute",
-        top: 0,
-        right: 0,
-        width: 400,
-        height: 240,
-        backgroundImage: HALFTONE_BG_LIGHT,
-        backgroundSize: "8px 8px",
-        zIndex: 2,
-      },
-    }),
-    // Imagen full-bleed arriba (1080×1200) con hard shadow
+    // Imagen full-bleed arriba (1080×1200) con chip overlay
     React.createElement(
       "div",
       {
@@ -421,9 +406,9 @@ export function SlideTemplateStory({
           bottom: 0,
           left: 0,
           right: 0,
-          height: 200,
+          height: 220,
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0))",
+            "linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0))",
         },
       }),
       // Chip de sección sobre la imagen, bottom-left
@@ -432,16 +417,16 @@ export function SlideTemplateStory({
         {
           style: {
             position: "absolute",
-            bottom: 40,
-            left: 50,
+            bottom: 50,
+            left: 60,
             display: "flex",
             backgroundColor: chipColor,
             color: "#ffffff",
             fontFamily: "Oswald",
             fontWeight: 700,
-            fontSize: 28,
+            fontSize: 30,
             letterSpacing: 2,
-            padding: "8px 20px",
+            padding: "9px 22px",
             textTransform: "uppercase",
           },
         },
@@ -455,11 +440,11 @@ export function SlideTemplateStory({
         style: {
           display: "flex",
           flexDirection: "column",
-          padding: "44px 50px 36px",
+          padding: "44px 60px 56px",
           flex: 1,
         },
       },
-      // Título grande Oswald 72px
+      // Título grande Oswald 76px (sin bajada)
       React.createElement(
         "div",
         {
@@ -467,29 +452,13 @@ export function SlideTemplateStory({
             display: "flex",
             fontFamily: "Oswald",
             fontWeight: 700,
-            fontSize: 72,
+            fontSize: 76,
             lineHeight: 1.1,
             color: "#0a0a0a",
-            marginBottom: 24,
+            marginBottom: 32,
           },
         },
         fit,
-      ),
-      // Bajada
-      bajada &&
-      React.createElement(
-        "div",
-        {
-          style: {
-            display: "flex",
-            fontFamily: "Inter",
-            fontWeight: 400,
-            fontSize: 26,
-            lineHeight: 1.4,
-            color: "#6b5d4f",
-          },
-        },
-        bajada,
       ),
       // Espaciador
       React.createElement("div", { style: { flex: 1 } }),
@@ -500,7 +469,7 @@ export function SlideTemplateStory({
           height: 10,
           backgroundImage: HALFTONE_BG,
           backgroundSize: "6px 6px",
-          marginBottom: 18,
+          marginBottom: 24,
         },
       }),
       // Footer: logo + web (izquierda) + fuente + fecha (derecha) — igual que el feed
@@ -526,7 +495,7 @@ export function SlideTemplateStory({
               src: logoDataUrl,
               style: {
                 display: "flex",
-                height: 80,
+                height: 100,
                 width: "auto",
                 objectFit: "contain",
               },
@@ -537,7 +506,7 @@ export function SlideTemplateStory({
                 style: {
                   fontFamily: "Oswald",
                   fontWeight: 700,
-                  fontSize: 28,
+                  fontSize: 34,
                   color: "#0a0a0a",
                   letterSpacing: 1,
                 },
@@ -551,8 +520,8 @@ export function SlideTemplateStory({
                 display: "flex",
                 fontFamily: "Oswald",
                 fontWeight: 600,
-                fontSize: 18,
-                marginTop: 3,
+                fontSize: 22,
+                marginTop: 4,
                 letterSpacing: 0.5,
               },
             },
@@ -585,10 +554,10 @@ export function SlideTemplateStory({
                 display: "flex",
                 fontFamily: "Inter",
                 fontWeight: 600,
-                fontSize: 14,
+                fontSize: 20,
                 color: "#6b5d4f",
                 letterSpacing: 1,
-                marginBottom: 3,
+                marginBottom: 4,
               },
             },
             sourceLabel,
@@ -600,7 +569,7 @@ export function SlideTemplateStory({
                 display: "flex",
                 fontFamily: "Inter",
                 fontWeight: 600,
-                fontSize: 18,
+                fontSize: 22,
                 color: "#6b5d4f",
                 letterSpacing: 1,
               },
