@@ -93,6 +93,7 @@ export async function buildCarousel(since: Date): Promise<CarouselResult> {
           imageDataUrl,
           excerpt: note.excerpt ?? undefined,
           dateLabel: formatDateLabel(note.created_at),
+          sourceLabel: note.author ?? undefined,
         });
         return await uploadSlidePng(png, note.section, timestamp);
       } catch (err) {
@@ -131,6 +132,8 @@ export async function buildStories(since: Date): Promise<StoriesResult> {
           section: note.section,
           imageDataUrl,
           excerpt: note.excerpt ?? undefined,
+          dateLabel: formatDateLabel(note.created_at),
+          sourceLabel: note.author ?? undefined,
         });
         // n = i+1 (1..10) para distinguir las 2 de cada sección
         return await uploadStoryPng(png, note.section, i + 1, timestamp);

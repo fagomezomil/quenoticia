@@ -351,13 +351,16 @@ export function SlideTemplate({
 
 /** Template JSX del slide Story 1080×1920 (9:16) para IG/FB stories.
  *  Layout vertical: imagen full-bleed arriba (1080×1200), chip overlay,
- *  título Oswald grande, bajada, footer con logo. Sin fecha/source (es efímero). */
+ *  título Oswald grande, bajada, footer con logo + web + fuente + fecha
+ *  (mismo footer que el carrusel del feed). */
 export function SlideTemplateStory({
   title,
   section,
   imageDataUrl,
   logoDataUrl,
   excerpt,
+  dateLabel,
+  sourceLabel,
 }: SlideData) {
   const cfg = sectionConfig[section];
   const chipLabel = cfg.label.toUpperCase();
@@ -500,7 +503,7 @@ export function SlideTemplateStory({
           marginBottom: 18,
         },
       }),
-      // Footer: logo + URL
+      // Footer: logo + web (izquierda) + fuente + fecha (derecha) — igual que el feed
       React.createElement(
         "div",
         {
@@ -523,7 +526,7 @@ export function SlideTemplateStory({
               src: logoDataUrl,
               style: {
                 display: "flex",
-                height: 90,
+                height: 80,
                 width: "auto",
                 objectFit: "contain",
               },
@@ -541,27 +544,68 @@ export function SlideTemplateStory({
               },
               "¡QUE NOTICIA!",
             ),
+          React.createElement(
+            "div",
+            {
+              style: {
+                display: "flex",
+                fontFamily: "Oswald",
+                fontWeight: 600,
+                fontSize: 18,
+                marginTop: 3,
+                letterSpacing: 0.5,
+              },
+            },
+            React.createElement(
+              "span",
+              { style: { color: "#f97316" } },
+              "que",
+            ),
+            React.createElement(
+              "span",
+              { style: { color: "#0a0a0a" } },
+              "noticia.com.ar",
+            ),
+          ),
         ),
         React.createElement(
           "div",
           {
             style: {
               display: "flex",
-              fontFamily: "Oswald",
-              fontWeight: 600,
-              fontSize: 22,
-              letterSpacing: 0.5,
+              flexDirection: "column",
+              alignItems: "flex-end",
             },
           },
+          sourceLabel &&
           React.createElement(
-            "span",
-            { style: { color: "#f97316" } },
-            "que",
+            "div",
+            {
+              style: {
+                display: "flex",
+                fontFamily: "Inter",
+                fontWeight: 600,
+                fontSize: 14,
+                color: "#6b5d4f",
+                letterSpacing: 1,
+                marginBottom: 3,
+              },
+            },
+            sourceLabel,
           ),
           React.createElement(
-            "span",
-            { style: { color: "#0a0a0a" } },
-            "noticia.com.ar",
+            "div",
+            {
+              style: {
+                display: "flex",
+                fontFamily: "Inter",
+                fontWeight: 600,
+                fontSize: 18,
+                color: "#6b5d4f",
+                letterSpacing: 1,
+              },
+            },
+            dateLabel ?? "",
           ),
         ),
       ),

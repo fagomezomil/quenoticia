@@ -18,6 +18,7 @@ export interface SelectedNote {
   original_url: string | null;
   excerpt: string | null;
   created_at: string;
+  author?: string | null;
 }
 
 type DbRow = {
@@ -28,6 +29,7 @@ type DbRow = {
   original_url: string | null;
   excerpt: string | null;
   created_at: string;
+  author: string | null;
 };
 
 const FALLBACK_WINDOW_HOURS = 72; // 3 días
@@ -41,7 +43,7 @@ export async function selectNotesForCarousel(since: Date): Promise<(SelectedNote
   const sinceIso = since.toISOString();
   const fallbackSince = new Date(Date.now() - FALLBACK_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
 
-  const cols = "id, title, section, image_url, original_url, excerpt, created_at";
+  const cols = "id, title, section, image_url, original_url, excerpt, created_at, author";
 
   const results = await Promise.all(
     CAROUSEL_SECTIONS.map(async (section): Promise<SelectedNote | null> => {
@@ -88,7 +90,7 @@ export async function selectNotesForStories(
   const sinceIso = since.toISOString();
   const fallbackSince = new Date(Date.now() - FALLBACK_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
 
-  const cols = "id, title, section, image_url, original_url, excerpt, created_at";
+  const cols = "id, title, section, image_url, original_url, excerpt, created_at, author";
 
   const results = await Promise.all(
     CAROUSEL_SECTIONS.map(async (section): Promise<(SelectedNote | null)[]> => {
