@@ -455,7 +455,7 @@ export function SlideTemplateStory({
         backgroundSize: "6px 6px",
       },
     }),
-    // Footer anclado al bottom: 44px — logo + web (izq) + fuente + fecha (der)
+    // Footer lado izquierdo — logo + web, anclado bottom:44 left:60
     React.createElement(
       "div",
       {
@@ -463,106 +463,100 @@ export function SlideTemplateStory({
           position: "absolute",
           bottom: 44,
           left: 60,
-          width: 960,
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-end",
+          flexDirection: "column",
         },
       },
-      React.createElement(
-        "div",
-        {
+      logoDataUrl
+        ? React.createElement("img", {
+          src: logoDataUrl,
           style: {
             display: "flex",
-            flexDirection: "column",
+            height: 100,
+            width: "auto",
+            objectFit: "contain",
           },
-        },
-        logoDataUrl
-          ? React.createElement("img", {
-            src: logoDataUrl,
-            style: {
-              display: "flex",
-              height: 100,
-              width: "auto",
-              objectFit: "contain",
-            },
-          })
-          : React.createElement(
-            "div",
-            {
-              style: {
-                fontFamily: "Oswald",
-                fontWeight: 700,
-                fontSize: 34,
-                color: "#0a0a0a",
-                letterSpacing: 1,
-              },
-            },
-            "¡QUE NOTICIA!",
-          ),
-        React.createElement(
+        })
+        : React.createElement(
           "div",
           {
             style: {
               display: "flex",
               fontFamily: "Oswald",
-              fontWeight: 600,
-              fontSize: 22,
-              marginTop: 4,
-              letterSpacing: 0.5,
+              fontWeight: 700,
+              fontSize: 34,
+              color: "#0a0a0a",
+              letterSpacing: 1,
             },
           },
-          React.createElement(
-            "span",
-            { style: { color: "#f97316" } },
-            "que",
-          ),
-          React.createElement(
-            "span",
-            { style: { color: "#0a0a0a" } },
-            "noticia.com.ar",
-          ),
+          "¡QUE NOTICIA!",
         ),
+      React.createElement(
+        "div",
+        {
+          style: {
+            display: "flex",
+            fontFamily: "Oswald",
+            fontWeight: 600,
+            fontSize: 22,
+            marginTop: 4,
+            letterSpacing: 0.5,
+          },
+        },
+        React.createElement(
+          "span",
+          { style: { color: "#f97316" } },
+          "que",
+        ),
+        React.createElement(
+          "span",
+          { style: { color: "#0a0a0a" } },
+          "noticia.com.ar",
+        ),
+      ),
+    ),
+    // Footer lado derecho — fuente + fecha, anclado bottom:44 right:60
+    React.createElement(
+      "div",
+      {
+        style: {
+          position: "absolute",
+          bottom: 44,
+          right: 60,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-end",
+        },
+      },
+      sourceLabel &&
+      React.createElement(
+        "div",
+        {
+          style: {
+            display: "flex",
+            fontFamily: "Inter",
+            fontWeight: 600,
+            fontSize: 18,
+            color: "#6b5d4f",
+            letterSpacing: 1,
+            marginBottom: 4,
+          },
+        },
+        sourceLabel,
       ),
       React.createElement(
         "div",
         {
           style: {
             display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-end",
+            fontFamily: "Inter",
+            fontWeight: 600,
+            fontSize: 22,
+            color: "#6b5d4f",
+            letterSpacing: 1,
           },
         },
-        sourceLabel &&
-        React.createElement(
-          "div",
-          {
-            style: {
-              display: "flex",
-              fontFamily: "Inter",
-              fontWeight: 600,
-              fontSize: 18,
-              color: "#6b5d4f",
-              letterSpacing: 1,
-              marginBottom: 4,
-            },
-          },
-          sourceLabel,
-        ),
-        React.createElement(
-          "div",
-          {
-            style: {
-              display: "flex",
-              fontFamily: "Inter",
-              fontWeight: 600,
-              fontSize: 22,
-              color: "#6b5d4f",
-              letterSpacing: 1,
-            },
-          },
-          dateLabel ?? "",
-        ),
+        dateLabel ?? "",
       ),
     ),
   );
