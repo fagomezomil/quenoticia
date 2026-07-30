@@ -55,13 +55,14 @@ function fitTitle(title: string): string {
   return cut.slice(0, lastSpace > 80 ? lastSpace : 107) + "…";
 }
 
-/** Trunca el título para story (9:16) — más espacio vertical, hasta 140 chars. */
+/** Trunca el título para story (9:16) — máx 90 chars (~3-4 líneas con Oswald 76px
+ *  en ancho 960px). Área de texto es 720px, hay que dejar espacio para el footer. */
 function fitTitleStory(title: string): string {
   const clean = title.replace(/\s+/g, " ").trim();
-  if (clean.length <= 140) return clean;
-  const cut = clean.slice(0, 137);
+  if (clean.length <= 90) return clean;
+  const cut = clean.slice(0, 87);
   const lastSpace = cut.lastIndexOf(" ");
-  return cut.slice(0, lastSpace > 100 ? lastSpace : 137) + "…";
+  return cut.slice(0, lastSpace > 60 ? lastSpace : 87) + "…";
 }
 
 /** Bajada de hasta 350 chars a partir del excerpt. */
@@ -440,7 +441,7 @@ export function SlideTemplateStory({
         style: {
           display: "flex",
           flexDirection: "column",
-          padding: "44px 60px 56px",
+          padding: "40px 60px 44px",
           flex: 1,
         },
       },
@@ -469,7 +470,7 @@ export function SlideTemplateStory({
           height: 10,
           backgroundImage: HALFTONE_BG,
           backgroundSize: "6px 6px",
-          marginBottom: 24,
+          marginBottom: 18,
         },
       }),
       // Footer: logo + web (izquierda) + fuente + fecha (derecha) — igual que el feed
