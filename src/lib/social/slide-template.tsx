@@ -372,7 +372,6 @@ export function SlideTemplateStory({
     {
       style: {
         display: "flex",
-        flexDirection: "column",
         width: STORY_WIDTH,
         height: STORY_HEIGHT,
         backgroundColor: "#ffffff",
@@ -380,203 +379,189 @@ export function SlideTemplateStory({
         position: "relative",
       },
     },
-    // Imagen full-bleed arriba (1080×1200) con chip overlay
+    // Imagen full-bleed arriba (1080×1200)
+    React.createElement("img", {
+      src: imageDataUrl,
+      style: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: STORY_WIDTH,
+        height: 1200,
+        objectFit: "cover",
+      },
+    }),
+    // Overlay degradado abajo de la imagen para que el chip resalte
+    React.createElement("div", {
+      style: {
+        position: "absolute",
+        top: 980,
+        left: 0,
+        width: STORY_WIDTH,
+        height: 220,
+        background:
+          "linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0))",
+      },
+    }),
+    // Chip de sección sobre la imagen, bottom-left (a 50px del bottom de la imagen)
     React.createElement(
       "div",
       {
-        style: {
-          display: "flex",
-          position: "relative",
-          width: "100%",
-          height: 1200,
-        },
-      },
-      React.createElement("img", {
-        src: imageDataUrl,
-        style: {
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-        },
-      }),
-      // Overlay degradado abajo para que el chip resalte
-      React.createElement("div", {
         style: {
           position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 220,
-          background:
-            "linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0))",
+          top: 1100,
+          left: 60,
+          display: "flex",
+          backgroundColor: chipColor,
+          color: "#ffffff",
+          fontFamily: "Oswald",
+          fontWeight: 700,
+          fontSize: 30,
+          letterSpacing: 2,
+          padding: "9px 22px",
+          textTransform: "uppercase",
         },
-      }),
-      // Chip de sección sobre la imagen, bottom-left
-      React.createElement(
-        "div",
-        {
-          style: {
-            position: "absolute",
-            bottom: 50,
-            left: 60,
-            display: "flex",
-            backgroundColor: chipColor,
-            color: "#ffffff",
-            fontFamily: "Oswald",
-            fontWeight: 700,
-            fontSize: 30,
-            letterSpacing: 2,
-            padding: "9px 22px",
-            textTransform: "uppercase",
-          },
-        },
-        chipLabel,
-      ),
+      },
+      chipLabel,
     ),
-    // Área de texto (720px de alto: 1920 - 1200)
+    // Título — anclado top: 1240 (40px abajo del fin de la imagen)
     React.createElement(
       "div",
       {
         style: {
+          position: "absolute",
+          top: 1240,
+          left: 60,
+          width: 960,
           display: "flex",
-          flexDirection: "column",
-          padding: "40px 60px 44px",
-          flex: 1,
+          fontFamily: "Oswald",
+          fontWeight: 700,
+          fontSize: 56,
+          lineHeight: 1.1,
+          color: "#0a0a0a",
         },
       },
-      // Título Oswald 60px (sin bajada) — calibrado para que el footer entre
-      React.createElement(
-        "div",
-        {
-          style: {
-            display: "flex",
-            fontFamily: "Oswald",
-            fontWeight: 700,
-            fontSize: 60,
-            lineHeight: 1.1,
-            color: "#0a0a0a",
-            marginBottom: 24,
-          },
-        },
-        fit,
-      ),
-      // Espaciador
-      React.createElement("div", { style: { flex: 1 } }),
-      // Halftone divider
-      React.createElement("div", {
+      fit,
+    ),
+    // Halftone divider — anclado a 230px del bottom (justo sobre el footer)
+    React.createElement("div", {
+      style: {
+        position: "absolute",
+        bottom: 210,
+        left: 60,
+        width: 960,
+        height: 10,
+        backgroundImage: HALFTONE_BG,
+        backgroundSize: "6px 6px",
+      },
+    }),
+    // Footer anclado al bottom: 44px — logo + web (izq) + fuente + fecha (der)
+    React.createElement(
+      "div",
+      {
         style: {
-          width: "100%",
-          height: 10,
-          backgroundImage: HALFTONE_BG,
-          backgroundSize: "6px 6px",
-          marginBottom: 18,
+          position: "absolute",
+          bottom: 44,
+          left: 60,
+          width: 960,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
         },
-      }),
-      // Footer: logo + web (izquierda) + fuente + fecha (derecha) — igual que el feed
+      },
       React.createElement(
         "div",
         {
           style: {
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
+            flexDirection: "column",
           },
         },
+        logoDataUrl
+          ? React.createElement("img", {
+            src: logoDataUrl,
+            style: {
+              display: "flex",
+              height: 100,
+              width: "auto",
+              objectFit: "contain",
+            },
+          })
+          : React.createElement(
+            "div",
+            {
+              style: {
+                fontFamily: "Oswald",
+                fontWeight: 700,
+                fontSize: 34,
+                color: "#0a0a0a",
+                letterSpacing: 1,
+              },
+            },
+            "¡QUE NOTICIA!",
+          ),
         React.createElement(
           "div",
           {
             style: {
               display: "flex",
-              flexDirection: "column",
+              fontFamily: "Oswald",
+              fontWeight: 600,
+              fontSize: 22,
+              marginTop: 4,
+              letterSpacing: 0.5,
             },
           },
-          logoDataUrl
-            ? React.createElement("img", {
-              src: logoDataUrl,
-              style: {
-                display: "flex",
-                height: 100,
-                width: "auto",
-                objectFit: "contain",
-              },
-            })
-            : React.createElement(
-              "div",
-              {
-                style: {
-                  fontFamily: "Oswald",
-                  fontWeight: 700,
-                  fontSize: 34,
-                  color: "#0a0a0a",
-                  letterSpacing: 1,
-                },
-              },
-              "¡QUE NOTICIA!",
-            ),
           React.createElement(
-            "div",
-            {
-              style: {
-                display: "flex",
-                fontFamily: "Oswald",
-                fontWeight: 600,
-                fontSize: 22,
-                marginTop: 4,
-                letterSpacing: 0.5,
-              },
-            },
-            React.createElement(
-              "span",
-              { style: { color: "#f97316" } },
-              "que",
-            ),
-            React.createElement(
-              "span",
-              { style: { color: "#0a0a0a" } },
-              "noticia.com.ar",
-            ),
+            "span",
+            { style: { color: "#f97316" } },
+            "que",
           ),
+          React.createElement(
+            "span",
+            { style: { color: "#0a0a0a" } },
+            "noticia.com.ar",
+          ),
+        ),
+      ),
+      React.createElement(
+        "div",
+        {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+          },
+        },
+        sourceLabel &&
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              fontFamily: "Inter",
+              fontWeight: 600,
+              fontSize: 20,
+              color: "#6b5d4f",
+              letterSpacing: 1,
+              marginBottom: 4,
+            },
+          },
+          sourceLabel,
         ),
         React.createElement(
           "div",
           {
             style: {
               display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-end",
+              fontFamily: "Inter",
+              fontWeight: 600,
+              fontSize: 22,
+              color: "#6b5d4f",
+              letterSpacing: 1,
             },
           },
-          sourceLabel &&
-          React.createElement(
-            "div",
-            {
-              style: {
-                display: "flex",
-                fontFamily: "Inter",
-                fontWeight: 600,
-                fontSize: 20,
-                color: "#6b5d4f",
-                letterSpacing: 1,
-                marginBottom: 4,
-              },
-            },
-            sourceLabel,
-          ),
-          React.createElement(
-            "div",
-            {
-              style: {
-                display: "flex",
-                fontFamily: "Inter",
-                fontWeight: 600,
-                fontSize: 22,
-                color: "#6b5d4f",
-                letterSpacing: 1,
-              },
-            },
-            dateLabel ?? "",
-          ),
+          dateLabel ?? "",
         ),
       ),
     ),
