@@ -17,16 +17,23 @@ export default function RecuperarPasswordPage() {
     setLoading(true);
     setError("");
 
-    const result = await requestPasswordReset(email, turnstileToken);
+    try {
+      const result = await requestPasswordReset(email, turnstileToken);
 
-    if (!result.ok) {
-      setError(result.error || "Error al enviar el email");
+      if (!result.ok) {
+        setError(result.error || "Error al enviar el email");
+        setLoading(false);
+        return;
+      }
+
+      setSent(true);
       setLoading(false);
-      return;
+    } catch (err) {
+      // Server action puede lanzar si middleware retorna 429 (rate limit) u otro error
+      console.error("recuperar-password error:", err);
+      setError("Demasiados intentos. Esperá un minuto y probá de nuevo.");
+      setLoading(false);
     }
-
-    setSent(true);
-    setLoading(false);
   };
 
   return (

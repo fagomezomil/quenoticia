@@ -37,16 +37,23 @@ function LoginCard() {
     setLoading(true);
     setError("");
 
-    const result = await loginUser(email, password, turnstileToken);
+    try {
+      const result = await loginUser(email, password, turnstileToken);
 
-    if (!result.ok) {
-      setError(result.error || "Error al iniciar sesión");
+      if (!result.ok) {
+        setError(result.error || "Error al iniciar sesión");
+        setLoading(false);
+        return;
+      }
+
+      router.push(redirectTo);
+      router.refresh();
+    } catch (err) {
+      // Server action can throw si middleware retorna 429 (rate limit) u otro error
+      console.error("login error:", err);
+      setError("Demasiados intentos. Esperá un minuto y probá de nuevo.");
       setLoading(false);
-      return;
     }
-
-    router.push(redirectTo);
-    router.refresh();
   };
 
   return (

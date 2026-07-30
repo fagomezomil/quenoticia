@@ -8,8 +8,9 @@ interface RateBucket {
 
 const buckets = new Map<string, RateBucket>();
 
-// 10 requests per minute for auth endpoints (strict)
-const AUTH_LIMIT = { max: 10, windowMs: 60_000 };
+// 30 requests per minute for auth endpoints (login, register, recuperar, actualizar)
+// 10 era muy ajustado — un usuario navegando auth pages podia trigger 429 en testing.
+const AUTH_LIMIT = { max: 30, windowMs: 60_000 };
 // 30 requests per minute for comments via API (medium, per IP)
 const COMMENT_LIMIT = { max: 30, windowMs: 60_000 };
 // 5 comments per minute per user (server action rate limit, by user_id)
@@ -44,7 +45,7 @@ setInterval(() => {
   }
 }, 120_000);
 
-/** Check auth rate limit (10 req/min per IP) */
+/** Check auth rate limit (30 req/min per IP) */
 export function rateLimit(ip: string): boolean {
   return checkLimit(`auth:${ip}`, AUTH_LIMIT);
 }
