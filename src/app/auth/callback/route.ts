@@ -36,15 +36,19 @@ function buildAllowedHosts(): Set<string> {
 
 function resolveHost(request: NextRequest, requestUrl: URL): string | null {
   const allowed = buildAllowedHosts();
-  const candidates = [
-    request.headers.get("x-forwarded-host"),
-    request.headers.get("host"),
-    requestUrl.host,
-  ];
-  for (const c of candidates) {
-    if (c && allowed.has(c.toLowerCase())) return c;
+  // En producción detrás de Caddy, X-Forwarded-Host siempre está presente
+  // (Caddy config: header_up X-Forwarded-Host {host}). Si está presente debe
+  // estar en allowlist — si no, fail closed (no caer a requestUrl.host interno).
+  const xfh = request.headers.get("x-forwarded-host");
+  const directHost = request.headers.get("host");
+  if (xfh) {
+    return allowed.has(xfh.toLowerCase()) ? xfh : null;
   }
-  return null;
+  if (directHost) {
+    return allowed.has(directHost.toLowerCase()) ? directHost : null;
+  }
+  // Sin headers de host (raro, solo en tests locales sin proxy) → usar URL socket
+  return allowed.has(requestUrl.host.toLowerCase()) ? requestUrl.host : null;
 }
 
 export async function GET(request: NextRequest) {
