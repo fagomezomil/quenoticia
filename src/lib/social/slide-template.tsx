@@ -55,14 +55,14 @@ function fitTitle(title: string): string {
   return cut.slice(0, lastSpace > 80 ? lastSpace : 107) + "…";
 }
 
-/** Trunca el título para story (9:16) — máx 90 chars (~3-4 líneas con Oswald 76px
+/** Trunca el título para story (9:16) — máx 80 chars (~4-5 líneas con Oswald 60px
  *  en ancho 960px). Área de texto es 720px, hay que dejar espacio para el footer. */
 function fitTitleStory(title: string): string {
   const clean = title.replace(/\s+/g, " ").trim();
-  if (clean.length <= 90) return clean;
-  const cut = clean.slice(0, 87);
+  if (clean.length <= 80) return clean;
+  const cut = clean.slice(0, 77);
   const lastSpace = cut.lastIndexOf(" ");
-  return cut.slice(0, lastSpace > 60 ? lastSpace : 87) + "…";
+  return cut.slice(0, lastSpace > 55 ? lastSpace : 77) + "…";
 }
 
 /** Bajada de hasta 350 chars a partir del excerpt. */
@@ -445,7 +445,7 @@ export function SlideTemplateStory({
           flex: 1,
         },
       },
-      // Título grande Oswald 76px (sin bajada)
+      // Título Oswald 60px (sin bajada) — calibrado para que el footer entre
       React.createElement(
         "div",
         {
@@ -453,10 +453,10 @@ export function SlideTemplateStory({
             display: "flex",
             fontFamily: "Oswald",
             fontWeight: 700,
-            fontSize: 76,
+            fontSize: 60,
             lineHeight: 1.1,
             color: "#0a0a0a",
-            marginBottom: 32,
+            marginBottom: 24,
           },
         },
         fit,
