@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import Header from "@/components/Header";
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
 import BreakingNews from "@/components/BreakingNews";
 import Footer from "@/components/Footer";
 import AdStickyFooter from "@/components/AdStickyFooter";
@@ -53,7 +53,7 @@ export default async function OpinionArticlePage({ params }: PageProps) {
   return (
     <>
       <Header />
-      <Navbar />
+      <NavbarWrapper />
       <BreakingNews articles={breaking} />
       <OpinionArticleDetail
         article={article}

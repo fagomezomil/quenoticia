@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import Header from "@/components/Header";
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
 import BreakingNews from "@/components/BreakingNews";
 import Footer from "@/components/Footer";
 import ArticleDetail from "@/components/ArticleDetail";
@@ -88,7 +88,7 @@ export default async function ArticlePage({ params }: PageProps) {
   return (
     <>
       <Header />
-      <Navbar />
+      <NavbarWrapper />
       <BreakingNews articles={breaking} />
       <ArticleDetail article={article} related={related} leaderboardAds={leaderboardAds} sidebarAds={sidebarAds} isCustom={!!customArticle} sponsoredSidebar={sponsoredSidebar} sponsoredIds={sponsoredIds} />
       <Footer />

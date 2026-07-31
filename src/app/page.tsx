@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Header from "@/components/Header";
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
 import BreakingNews from "@/components/BreakingNews";
 import ArticleCard from "@/components/ArticleCard";
 import AdSlot from "@/components/AdSlot";
@@ -114,7 +114,7 @@ export default async function Home() {
   return (
     <>
       <Header />
-      <Navbar />
+      <NavbarWrapper />
       <BreakingNews articles={breaking} />
 
       {/* Leaderboard ad */}

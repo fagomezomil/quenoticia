@@ -10,8 +10,15 @@ import UserDropdown from "./UserDropdown";
 import GuestDropdown from "./HeaderAuth";
 import GoogleLoginButton from "./GoogleLoginButton";
 
-export default function Navbar() {
-  const sections = Object.entries(sectionConfig);
+interface NavbarProps {
+  /** Si es false, oculta la pestaña Opinión del menú (no hay notas publicadas). */
+  hasOpinionNotes?: boolean;
+}
+
+export default function Navbar({ hasOpinionNotes = true }: NavbarProps = {}) {
+  const sections = Object.entries(sectionConfig).filter(
+    ([key]) => key !== "opinion" || hasOpinionNotes,
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const router = useRouter();

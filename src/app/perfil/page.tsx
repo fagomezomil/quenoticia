@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import ProfilePageClient from "@/components/ProfilePageClient";
 import Header from "@/components/Header";
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
 import Footer from "@/components/Footer";
 
 export default async function PerfilPage() {
@@ -65,7 +65,7 @@ export default async function PerfilPage() {
   return (
     <>
       <Header />
-      <Navbar />
+      <NavbarWrapper />
       <ProfilePageClient
         likedArticles={likedArticles}
         favoritedArticles={favoritedArticles}

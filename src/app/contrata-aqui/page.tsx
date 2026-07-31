@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
 import Footer from "@/components/Footer";
 import { sectionConfig } from "@/lib/data";
 
@@ -139,7 +139,7 @@ export default function ContrataAquiPage() {
   return (
     <>
       <Header />
-      <Navbar />
+      <NavbarWrapper />
 
       <main className="max-w-6xl mx-auto px-4 py-10">
         {/* HERO */}

@@ -1,12 +1,12 @@
 import Header from "@/components/Header";
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
 import Footer from "@/components/Footer";
 
 export default function Loading() {
   return (
     <>
       <Header />
-      <Navbar />
+      <NavbarWrapper />
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Breadcrumb skeleton */}
         <div className="animate-pulse h-3 w-40 rounded bg-muted/20 mb-4" />

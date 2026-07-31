@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
 import BreakingNews from "@/components/BreakingNews";
 import Footer from "@/components/Footer";
 import Link from "next/link";
@@ -73,7 +73,7 @@ export default function SectionPageLayout({
   return (
     <>
       <Header />
-      <Navbar />
+      <NavbarWrapper />
       <BreakingNews articles={allArticles} />
 
       <main className="max-w-7xl mx-auto px-4 pt-6 pb-10">

@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
 import Footer from "@/components/Footer";
 import AdminShell from "./AdminShell";
 
@@ -13,7 +13,7 @@ export default function AdminSiteLayout({ role, email, children }: AdminSiteLayo
   return (
     <>
       <Header />
-      <Navbar />
+      <NavbarWrapper />
       <AdminShell role={role} email={email}>
         <main className="max-w-7xl mx-auto px-4 py-6 min-h-[60vh]">
           {children}

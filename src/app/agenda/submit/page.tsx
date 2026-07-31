@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Header from "@/components/Header";
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
 import BreakingNews from "@/components/BreakingNews";
 import Footer from "@/components/Footer";
 import AdStickyFooter from "@/components/AdStickyFooter";
@@ -38,7 +38,7 @@ export default async function SubmitEventPage() {
   return (
     <>
       <Header />
-      <Navbar />
+      <NavbarWrapper />
       <BreakingNews articles={breaking} />
 
       <div className="max-w-7xl mx-auto px-4 py-6">

@@ -28,6 +28,24 @@ function mapRowToArticle(row: Record<string, unknown>): CustomArticle {
   };
 }
 
+/** Devuelve true si existe al menos 1 nota de opinión activa.
+ *  Query mínima (limit 1) — usada por NavbarWrapper para decidir si mostrar la pestaña Opinión. */
+export async function hasOpinionNotes(): Promise<boolean> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("articles")
+      .select("id")
+      .eq("active", true)
+      .eq("section", "opinion")
+      .limit(1);
+    if (error || !data) return false;
+    return data.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export async function getActiveArticles(section?: Section): Promise<CustomArticle[]> {
   try {
     const supabase = await createClient();

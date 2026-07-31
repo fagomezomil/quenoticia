@@ -1,13 +1,13 @@
 import Link from "next/link";
 import Header from "@/components/Header";
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
 import Footer from "@/components/Footer";
 
 export default function NotFound() {
   return (
     <>
       <Header />
-      <Navbar />
+      <NavbarWrapper />
       <main className="max-w-7xl mx-auto px-4 py-16 text-center">
         <h1 className="text-6xl font-bold font-[family-name:var(--font-heading)] text-ink">
           404
