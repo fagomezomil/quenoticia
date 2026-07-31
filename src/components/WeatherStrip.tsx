@@ -74,12 +74,10 @@ export default function WeatherStrip({ weather }: WeatherStripProps) {
         {/* Forecast 5 days */}
         <div className="flex items-stretch gap-1.5 ml-auto">
           {forecast.map((day) => (
-            <div key={day.date} className="bg-ink/5 rounded px-4 py-2 text-center min-w-[80px]">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-left">
-                  <p className="text-xs font-semibold text-ink leading-none">{day.dayName}</p>
-                  <p className="text-[10px] text-muted/60 leading-tight">{day.date.slice(8, 10)}/{day.date.slice(5, 7)}</p>
-                </div>
+            <div key={day.date} className="flex items-center justify-between gap-2">
+              <div className="text-left">
+                <p className="text-xs font-semibold text-ink leading-none">{day.dayName}</p>
+                <p className="text-[10px] text-muted/60 leading-tight">{day.date.slice(8, 10)}/{day.date.slice(5, 7)}</p>
                 <div className="flex items-center gap-1">
                   <span className="text-2xl leading-none">{day.weatherIcon}</span>
                   <span className="text-sm font-semibold text-ink leading-none">
