@@ -70,14 +70,19 @@ export default function WeatherStrip({ weather }: WeatherStripProps) {
             <span className="font-semibold text-ink">{current.humidity}%</span>
           </div>
         </div>
-
+        <div className="flex flex-col text-right float-right ml-auto pr-4">
+          <span className="text-xl font-black font-[family-name:var(--font-heading)] text-clima leading-none">¿Cómo se viene</span>
+          <span className="text-xl font-black font-[family-name:var(--font-heading)] text-clima leading-none">la semana?</span>
+        </div>
         {/* Forecast 5 days */}
-        <div className="flex items-stretch gap-1.5 ml-auto">
+        <div className="flex items-stretch gap-1.5 ">
           {forecast.map((day) => (
-            <div key={day.date} className="flex items-center justify-between gap-2">
-              <div className="text-left">
-                <p className="text-xs font-semibold text-ink leading-none">{day.dayName}</p>
-                <p className="text-[10px] text-muted/60 leading-tight">{day.date.slice(8, 10)}/{day.date.slice(5, 7)}</p>
+            <div key={day.date} className="flex items-center justify-between pr-6">
+              <div className="flex flex-col items-center ">
+                <div className="flex flex-row justify-between pb-2">
+                  <p className="text-xs font-semibold text-ink leading-none pr-6">{day.dayName}</p>
+                  <p className="text-[10px] text-muted/60 leading-tight">{day.date.slice(8, 10)}/{day.date.slice(5, 7)}</p>
+                </div>
                 <div className="flex items-center gap-1">
                   <span className="text-2xl leading-none">{day.weatherIcon}</span>
                   <span className="text-sm font-semibold text-ink leading-none">
