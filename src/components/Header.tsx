@@ -26,7 +26,7 @@ export default async function Header() {
     : featuredRaw;
 
   return (
-    <header className="bg-white text-white relative" style={{ overflow: "visible" }}>
+    <header className="bg-white text-white relative z-[110]" style={{ overflow: "visible" }}>
       {/* Top bar — naranja + halftone */}
       <div
         className="bg-gray-200 halftone-light w-full mx-auto px-4 py-1.5 flex items-center justify-between text-xs tracking-wider uppercase text-orange-600 relative"
