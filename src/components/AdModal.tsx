@@ -81,30 +81,20 @@ export default function AdModal({ ad }: AdModalProps) {
 
         {imgSrc ? (
           ad!.link_url ? (
-            <a
-              href={ad!.link_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full h-full"
-              style={{
-                backgroundImage: `url("${imgSrc}")`,
-                backgroundSize: "contain",
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "center",
-              }}
-              aria-label={ad!.title || "Aviso publicitario"}
-            />
+            <a href={ad!.link_url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+              <img
+                src={imgSrc}
+                alt={ad!.title || "Aviso publicitario"}
+                className="w-full h-full object-contain"
+                loading="lazy"
+              />
+            </a>
           ) : (
-            <div
-              className="w-full h-full"
-              style={{
-                backgroundImage: `url("${imgSrc}")`,
-                backgroundSize: "contain",
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "center",
-              }}
-              role="img"
-              aria-label={ad!.title || "Aviso publicitario"}
+            <img
+              src={imgSrc}
+              alt={ad!.title || "Aviso publicitario"}
+              className="w-full h-full object-contain"
+              loading="lazy"
             />
           )
         ) : (

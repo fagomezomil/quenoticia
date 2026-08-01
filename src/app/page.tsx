@@ -249,6 +249,12 @@ export default async function Home() {
       </main>
 
       <Footer />
+      {modalAd?.image_url && (
+        <link rel="preload" as="image" href={modalAd.image_url} />
+      )}
+      {modalAd?.mobile_image_url && (
+        <link rel="preload" as="image" href={modalAd.mobile_image_url} />
+      )}
       <AdModal ad={modalAd} />
       <AdStickyFooter ad={stickyFooterAd} />
     </>
