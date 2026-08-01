@@ -47,10 +47,6 @@ function sponsoredToArticle(s: SponsoredContent): Article {
 
 export const revalidate = 300;
 
-export const headers = {
-  "cache-control": "s-maxage=60, stale-while-revalidate=600",
-};
-
 interface Props {
   searchParams: Promise<{ page?: string }>;
 }
