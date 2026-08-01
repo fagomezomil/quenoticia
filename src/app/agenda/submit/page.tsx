@@ -16,6 +16,7 @@ export const revalidate = 300;
 export const metadata = {
   title: "Envianos tu evento | ¡QUE NOTICIA!",
   description: "Proponé un evento para la Agenda Cultural de Tucumán.",
+  robots: { index: false, follow: true },
 };
 
 export default async function SubmitEventPage() {

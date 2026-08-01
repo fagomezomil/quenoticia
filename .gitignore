@@ -48,6 +48,7 @@ netlify.toml
 
 # screenshots de desarrollo
 /screenshots/
+/seo-screenshots/
 
 # supabase (production secrets and DB structure)
 /supabase/

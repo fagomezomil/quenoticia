@@ -4,6 +4,13 @@ import ProfilePageClient from "@/components/ProfilePageClient";
 import Header from "@/components/Header";
 import NavbarWrapper from "@/components/NavbarWrapper";
 import Footer from "@/components/Footer";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Mi perfil | ¡QUE NOTICIA!",
+  description: "Gestioná tu perfil en ¡QUE NOTICIA!.",
+  robots: { index: false, follow: false },
+};
 
 export default async function PerfilPage() {
   const supabase = await createClient();

@@ -1,13 +1,15 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getMySubmissions } from "@/lib/submissions";
 import type { EventSubmission, SubmissionStatus, AgendaCategory } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Mis propuestas | ¡QUE NOTICIA!",
   description: "Estado de las propuestas de eventos que enviaste.",
+  robots: { index: false, follow: false },
 };
 
 const CAT_LABEL: Record<AgendaCategory, string> = {

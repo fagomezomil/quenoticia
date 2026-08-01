@@ -27,6 +27,13 @@ export async function generateMetadata({
   const article = customArticle ?? await fetchArticleDetail(id) ?? getSeedArticleById(id);
   if (!article) return { title: "Artículo no encontrado" };
   const canonicalPath = `/${article.section}/${article.id}`;
+  // dateModified = updated_at (customArticles) o article.date. publishedTime cae a
+  // dateModified cuando article.date está vacío (scraper a veces no lo pobla).
+  const dateModified =
+    "updated_at" in article && typeof article.updated_at === "string"
+      ? article.updated_at
+      : article.date;
+  const datePublished = article.date || dateModified;
   return {
     title: article.title,
     description: article.excerpt || article.title,
@@ -40,7 +47,8 @@ export async function generateMetadata({
         images: [{ url: article.imageUrl, alt: article.imageAlt || article.title }],
       } : {}),
       ...(article.author ? { authors: [article.author] } : {}),
-      ...(article.date ? { publishedTime: article.date } : {}),
+      ...(datePublished ? { publishedTime: datePublished } : {}),
+      ...(dateModified && dateModified !== datePublished ? { modifiedTime: dateModified } : {}),
     },
     twitter: {
       card: "summary_large_image",
