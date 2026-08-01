@@ -3,6 +3,7 @@ import NavbarWrapper from "@/components/NavbarWrapper";
 import BreakingNews from "@/components/BreakingNews";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import Image from "next/image";
 import ArticleCard from "@/components/ArticleCard";
 import AdRotator from "@/components/AdRotator";
 import SponsoredRotator from "@/components/SponsoredRotator";
@@ -118,11 +119,13 @@ export default function SectionPageLayout({
                 className="group relative overflow-hidden bg-ink min-h-[260px] md:min-h-[440px] block border-ink-3 shadow-hard"
               >
                 {featured.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={featured.imageUrl}
-                    alt={featured.imageAlt}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    alt={featured.imageAlt || featured.title}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 66vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
                   <div
@@ -182,13 +185,15 @@ export default function SectionPageLayout({
                     className="group flex gap-3 py-3 border-b-2 border-ink last:border-0 hover:bg-brand/10 transition-colors -mx-1 px-1"
                   >
                     {a.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={a.imageUrl}
-                        alt={a.imageAlt}
-                        className="w-24 h-20 object-cover shrink-0 border-2 border-ink"
-                        loading="lazy"
-                      />
+                      <div className="relative w-24 h-20 shrink-0 overflow-hidden border-2 border-ink">
+                        <Image
+                          src={a.imageUrl}
+                          alt={a.imageAlt || a.title}
+                          fill
+                          sizes="96px"
+                          className="object-cover"
+                        />
+                      </div>
                     ) : (
                       <div
                         className="w-24 h-20 shrink-0 flex items-center justify-center border-2 border-ink"

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Article, sectionConfig } from "@/lib/types";
 
@@ -53,13 +54,14 @@ function NewsImage({
   if (variant === "hero") {
     return (
       <div className="relative w-full h-64 md:h-80 lg:h-96 overflow-hidden" style={{ borderTop: `3px solid ${sectionColor}` }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={src}
           alt={alt}
-          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
           onError={() => setFailed(true)}
-          loading="eager"
         />
       </div>
     );
@@ -68,13 +70,13 @@ function NewsImage({
   if (variant === "compact") {
     return (
       <div className="relative w-16 h-16 shrink-0 overflow-hidden border-2 border-ink">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={src}
           alt={alt}
-          className="w-full h-full object-cover"
+          fill
+          sizes="64px"
+          className="object-cover"
           onError={() => setFailed(true)}
-          loading="lazy"
         />
       </div>
     );
@@ -82,16 +84,14 @@ function NewsImage({
 
   // standard
   return (
-    <>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={alt}
-        className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-        onError={() => setFailed(true)}
-        loading="lazy"
-      />
-    </>
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+      className="absolute inset-0 object-cover group-hover:scale-[1.03] transition-transform duration-300"
+      onError={() => setFailed(true)}
+    />
   );
 }
 
@@ -209,11 +209,13 @@ export default function ArticleCard({
           className="block relative w-full min-h-[280px] md:min-h-[420px] lg:min-h-[550px] overflow-hidden bg-ink border-ink-3 shadow-hard-lg"
         >
           {article.imageUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
+            <Image
               src={article.imageUrl}
-              alt={article.imageAlt}
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
+              alt={article.imageAlt || article.title}
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 100vw"
+              className="object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
             />
           ) : (
             <div className="absolute inset-0 halftone" />

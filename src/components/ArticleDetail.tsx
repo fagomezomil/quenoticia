@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Article, Ad, sectionConfig } from "@/lib/types";
 import AdSlot from "@/components/AdSlot";
@@ -268,14 +269,15 @@ export default function ArticleDetail({
           <AnimateIn direction="up" delay={0.25}>
           {article.imageUrl && !imgFailed ? (
             <div className="mt-6">
-              <div className="w-full h-64 md:h-96 overflow-hidden rounded-sm">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <div className="relative w-full h-64 md:h-96 overflow-hidden rounded-sm">
+                <Image
                   src={article.imageUrl}
-                  alt={article.imageAlt}
-                  className="w-full h-full object-cover"
+                  alt={article.imageAlt || article.title}
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 100vw, 800px"
+                  className="object-cover"
                   onError={() => setImgFailed(true)}
-                  loading="eager"
                 />
               </div>
               {article.imageAlt && (
@@ -355,12 +357,12 @@ export default function ArticleDetail({
                     <Link key={a.id} href={`/${a.section}/${a.id}`} className="group">
                       <div className="h-40 overflow-hidden rounded-sm relative" style={{ borderTop: `3px solid ${rCfg.color}` }}>
                         {a.imageUrl ? (
-                          /* eslint-disable-next-line @next/next/no-img-element */
-                          <img
+                          <Image
                             src={a.imageUrl}
-                            alt={a.imageAlt}
-                            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-                            loading="lazy"
+                            alt={a.imageAlt || a.title}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                            className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
                           />
                         ) : (
                           <div
@@ -460,7 +462,15 @@ export default function ArticleDetail({
                     className="block group bg-white rounded border border-border overflow-hidden hover:shadow-sm transition-shadow"
                   >
                     {s.imageUrl && (
-                      <img src={s.imageUrl} alt={s.imageAlt} className="w-full h-32 object-cover" />
+                      <div className="relative w-full h-32 overflow-hidden">
+                        <Image
+                          src={s.imageUrl}
+                          alt={s.imageAlt || s.title}
+                          fill
+                          sizes="300px"
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                     <div className="p-3">
                       <h3 className="text-sm font-semibold leading-snug font-[family-name:var(--font-heading)] group-hover:underline line-clamp-2">

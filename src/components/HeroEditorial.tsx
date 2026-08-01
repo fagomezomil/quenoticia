@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import type { Article } from "@/lib/types";
 import { sectionConfig } from "@/lib/types";
@@ -36,13 +37,14 @@ export default function HeroEditorial({ articles }: HeroEditorialProps) {
         className="lg:col-span-2 group relative overflow-hidden bg-ink min-h-[260px] md:min-h-[440px] border-ink-3 shadow-hard"
       >
         {lead.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             key={lead.id}
             src={lead.imageUrl}
             alt={lead.imageAlt || lead.title}
-            fetchPriority="high"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            fill
+            priority
+            sizes="(max-width: 1024px) 100vw, 66vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div
@@ -109,15 +111,18 @@ export default function HeroEditorial({ articles }: HeroEditorialProps) {
                 onMouseEnter={() => setActiveIndex(i)}
               >
                 {a.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={a.imageUrl}
-                    alt={a.imageAlt}
-                    className="w-24 h-20 object-cover shrink-0 border-2 border-ink transition-all duration-300"
-                    style={{
-                      opacity: isActive ? 1 : 0.65,
-                    }}
-                  />
+                  <div
+                    className="relative w-24 h-20 shrink-0 overflow-hidden border-2 border-ink transition-all duration-300"
+                    style={{ opacity: isActive ? 1 : 0.65 }}
+                  >
+                    <Image
+                      src={a.imageUrl}
+                      alt={a.imageAlt || a.title}
+                      fill
+                      sizes="96px"
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
                   <div
                     className="w-24 h-20 shrink-0 flex items-center justify-center border-2 border-ink transition-all duration-300"
@@ -168,13 +173,18 @@ export default function HeroEditorial({ articles }: HeroEditorialProps) {
               className="shrink-0 w-[200px] snap-start group"
             >
               {a.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={a.imageUrl}
-                  alt={a.imageAlt}
-                  className="w-full h-28 object-cover border-2 border-ink shadow-hard-sm"
+                <div
+                  className="relative w-full h-28 overflow-hidden border-2 border-ink shadow-hard-sm"
                   style={{ borderTopColor: aCfg?.color }}
-                />
+                >
+                  <Image
+                    src={a.imageUrl}
+                    alt={a.imageAlt || a.title}
+                    fill
+                    sizes="200px"
+                    className="object-cover"
+                  />
+                </div>
               ) : (
                 <div
                   className="w-full h-28 flex items-center justify-center border-2 border-ink"
