@@ -6,7 +6,7 @@ import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/site";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Publicitá en ¡QUE NOTICIA! — Formatos publicitarios",
+  title: "Publicitá — Formatos publicitarios",
   description:
     "Formatos publicitarios para tu marca en ¡QUE NOTICIA! — medio regional de Tucumán. Leaderboard, modal, sidebar, sticky footer y contenido patrocinado.",
   alternates: { canonical: "/contrata-aqui" },
