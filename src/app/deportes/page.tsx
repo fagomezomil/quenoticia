@@ -18,6 +18,7 @@ export const metadata: Metadata = {
     title: `${SECTION_META.deportes.title} | ${SITE_NAME}`,
     description: SECTION_META.deportes.description,
     url: `${SITE_URL}/deportes`,
+    type: "website",
   },
   twitter: {
     title: `${SECTION_META.deportes.title} | ${SITE_NAME}`,

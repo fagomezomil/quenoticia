@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     title: `${SECTION_META.tucuman.title} | ${SITE_NAME}`,
     description: SECTION_META.tucuman.description,
     url: `${SITE_URL}/tucuman`,
+    type: "website",
   },
   twitter: {
     title: `${SECTION_META.tucuman.title} | ${SITE_NAME}`,

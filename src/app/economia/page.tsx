@@ -18,6 +18,7 @@ export const metadata: Metadata = {
     title: `${SECTION_META.economia.title} | ${SITE_NAME}`,
     description: SECTION_META.economia.description,
     url: `${SITE_URL}/economia`,
+    type: "website",
   },
   twitter: {
     title: `${SECTION_META.economia.title} | ${SITE_NAME}`,

@@ -18,6 +18,7 @@ export const metadata: Metadata = {
     title: `${SECTION_META.politica.title} | ${SITE_NAME}`,
     description: SECTION_META.politica.description,
     url: `${SITE_URL}/politica`,
+    type: "website",
   },
   twitter: {
     title: `${SECTION_META.politica.title} | ${SITE_NAME}`,

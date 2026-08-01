@@ -24,6 +24,7 @@ export const metadata: Metadata = {
     title: `${SECTION_META.opinion.title} | ${SITE_NAME}`,
     description: SECTION_META.opinion.description,
     url: `${SITE_URL}/opinion`,
+    type: "website",
   },
   twitter: {
     title: `${SECTION_META.opinion.title} | ${SITE_NAME}`,

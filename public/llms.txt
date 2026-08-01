@@ -1,0 +1,20 @@
+# ¡QUE NOTICIA!
+> Portal de noticias regional de Tucumán, Argentina. Política, deportes, economía, internacionales, opinión y más. Cobertura del NOA y Argentina.
+
+## Secciones
+- Política: https://www.quenoticia.com.ar/politica — Noticias políticas nacional, provincial y tucumana
+- Deportes: https://www.quenoticia.com.ar/deportes — Fútbol, tenis, basket y deportes del NOA
+- Economía: https://www.quenoticia.com.ar/economia — Economía nacional, mercados y agroindustria tucumana
+- Internacionales: https://www.quenoticia.com.ar/internacionales — Noticias del mundo
+- Tucumán: https://www.quenoticia.com.ar/tucuman — Noticias de San Miguel de Tucumán y el interior provinciano
+- Opinión: https://www.quenoticia.com.ar/opinion — Columnistas y editoriales
+- Clima: https://www.quenoticia.com.ar/clima — Pronóstico del tiempo en Tucumán
+
+## Sobre el medio
+¡QUE NOTICIA! es un medio digital independiente de Tucumán, Argentina. Foco en información regional del NOA (Noroeste Argentino) con cobertura de política, deportes, economía, internacionales y opinión. Editorial Comic Noir + Naranja. Frecuencia de actualización: 2 veces por día (08:00 y 20:00 ART) vía scraper propio de 5 fuentes (Contexto, Comunicación Tucumán, Comunicación SMT, Ámbito, TyC Sports) más redacción manual de opinión.
+
+## Contacto
+- Sitio: https://www.quenoticia.com.ar
+- Publicidad: https://www.quenoticia.com.ar/contrata-aqui
+- Facebook: https://www.facebook.com/quenoticiaok
+- Instagram: https://www.instagram.com/quenoticiaok
