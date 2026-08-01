@@ -5,7 +5,7 @@ import { sectionConfig } from "@/lib/data";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Publicitá en ¡QUE NOTICIA!",
+  title: "Publicitá acá",
   description:
     "Formatos publicitarios para tu marca en ¡QUE NOTICIA! — medio regional de Tucumán. Leaderboard, rectangle, sidebar, sticky footer, modal, contenido patrocinado y stories en redes.",
   alternates: { canonical: "/contrata-aqui" },
