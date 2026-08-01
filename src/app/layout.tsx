@@ -93,6 +93,8 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://uhuidlistqoonyqtpyvh.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://uhuidlistqoonyqtpyvh.supabase.co" />
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap"
           rel="stylesheet"

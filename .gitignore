@@ -55,3 +55,4 @@ netlify.toml
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+quenoticia-audit/

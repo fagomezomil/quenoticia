@@ -11,7 +11,7 @@ function mapRow(row: Record<string, unknown>): SponsoredContent {
     publisher: (row.publisher as string) || "",
     date: (row.date as string) || "",
     imageUrl: (row.image_url as string) || null,
-    imageAlt: (row.image_alt as string) || "",
+    imageAlt: (row.image_alt as string) || (row.title as string) || "",
     excerpt: (row.excerpt as string) || "",
     body: (row.body as string) || null,
     originalUrl: (row.original_url as string) || null,

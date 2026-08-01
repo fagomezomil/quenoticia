@@ -40,7 +40,8 @@ export default function HeroEditorial({ articles }: HeroEditorialProps) {
           <img
             key={lead.id}
             src={lead.imageUrl}
-            alt={lead.imageAlt}
+            alt={lead.imageAlt || lead.title}
+            fetchPriority="high"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (

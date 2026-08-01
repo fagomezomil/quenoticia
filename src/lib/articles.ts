@@ -11,7 +11,7 @@ function mapRowToArticle(row: Record<string, unknown>): CustomArticle {
     publisher: row.publisher as string,
     date: row.date as string,
     imageUrl: (row.image_url as string) || undefined,
-    imageAlt: (row.image_alt as string) || "",
+    imageAlt: (row.image_alt as string) || (row.title as string) || "",
     excerpt: (row.excerpt as string) || "",
     body: (row.body as string) || undefined,
     originalUrl: (row.original_url as string) || undefined,
