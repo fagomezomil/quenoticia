@@ -2,6 +2,7 @@
 
 import { createClient, requireEditorAction } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { notifyArticleChange } from "@/lib/indexnow";
 
 // Whitelist de campos permitidos en create/update — todo lo que no esté acá se descarta.
 const ARTICLE_FIELDS = [
@@ -95,6 +96,9 @@ export async function updateArticle(payload: UpdateArticlePayload) {
   revalidatePath(`/${payload.section}`);
   revalidatePath(`/${payload.section}/${id}`);
 
+  // IndexNow: notificar push a Bing/Yandex (best-effort, no bloqueante)
+  void notifyArticleChange(payload.section, id);
+
   return { error: null };
 }
 
@@ -161,6 +165,9 @@ export async function createArticle(payload: CreateArticlePayload) {
   revalidatePath("/admin/opinion");
   revalidatePath("/");
   revalidatePath(`/${payload.section}`);
+
+  // IndexNow: notificar push a Bing/Yandex (best-effort, no bloqueante)
+  void notifyArticleChange(payload.section, result.id);
 
   return { error: null, id: result.id };
 }
