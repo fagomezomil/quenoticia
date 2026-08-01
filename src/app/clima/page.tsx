@@ -9,23 +9,30 @@ import AdRotator from "@/components/AdRotator";
 import { fetchCurrentWeather, fetchAllCitiesWeather } from "@/lib/weather";
 import { getActiveAds } from "@/lib/ads";
 import { getCachedBreakingNews } from "@/lib/sync-news";
+import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/site";
 import type { Metadata } from "next";
 import type { Ad } from "@/lib/types";
 
 export const revalidate = 600;
 
 export const metadata: Metadata = {
-  title: "Clima",
-  description: "Pronóstico del tiempo para San Miguel de Tucumán y las principales ciudades de Argentina.",
+  title: "Clima Tucumán y Argentina — Pronóstico del tiempo",
+  description:
+    "Pronóstico del tiempo en San Miguel de Tucumán y las principales ciudades de Argentina. Temperatura, humedad y pronóstico extendido actualizado.",
   alternates: { canonical: "/clima" },
   openGraph: {
-    title: "Clima | ¡QUE NOTICIA!",
-    description: "Pronóstico del tiempo para San Miguel de Tucumán y las principales ciudades de Argentina.",
-    url: "https://www.quenoticia.com.ar/clima",
+    title: "Clima Tucumán y Argentina | " + SITE_NAME,
+    description:
+      "Pronóstico del tiempo en San Miguel de Tucumán y las principales ciudades de Argentina. Temperatura, humedad y pronóstico extendido actualizado.",
+    url: SITE_URL + "/clima",
+    type: "website",
+    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: SITE_NAME }],
   },
   twitter: {
-    title: "Clima | ¡QUE NOTICIA!",
-    description: "Pronóstico del tiempo para San Miguel de Tucumán y las principales ciudades de Argentina.",
+    title: "Clima Tucumán y Argentina | " + SITE_NAME,
+    description:
+      "Pronóstico del tiempo en San Miguel de Tucumán y las principales ciudades de Argentina.",
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 

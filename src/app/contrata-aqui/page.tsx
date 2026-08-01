@@ -2,23 +2,27 @@ import Header from "@/components/Header";
 import NavbarWrapper from "@/components/NavbarWrapper";
 import Footer from "@/components/Footer";
 import { sectionConfig } from "@/lib/data";
+import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/site";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Publicitá acá",
+  title: "Publicitá en ¡QUE NOTICIA! — Formatos publicitarios",
   description:
-    "Formatos publicitarios para tu marca en ¡QUE NOTICIA! — medio regional de Tucumán. Leaderboard, rectangle, sidebar, sticky footer, modal, contenido patrocinado y stories en redes.",
+    "Formatos publicitarios para tu marca en ¡QUE NOTICIA! — medio regional de Tucumán. Leaderboard, modal, sidebar, sticky footer y contenido patrocinado.",
   alternates: { canonical: "/contrata-aqui" },
   openGraph: {
-    title: "Publicitá en ¡QUE NOTICIA!",
+    title: "Publicitá en " + SITE_NAME,
     description:
       "Formatos publicitarios para tu marca en ¡QUE NOTICIA! — medio regional de Tucumán.",
-    url: "https://www.quenoticia.com.ar/contrata-aqui",
+    url: SITE_URL + "/contrata-aqui",
+    type: "website",
+    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: SITE_NAME }],
   },
   twitter: {
-    title: "Publicitá en ¡QUE NOTICIA!",
+    title: "Publicitá en " + SITE_NAME,
     description:
       "Formatos publicitarios para tu marca en ¡QUE NOTICIA! — medio regional de Tucumán.",
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 

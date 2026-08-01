@@ -38,7 +38,7 @@ export const SECTION_META: Record<
       "Noticias del mundo. Política internacional, conflictos, economía global, ciencia y cultura desde todos los continentes.",
   },
   tucuman: {
-    title: "Tucumán",
+    title: "Tucumán — Noticias provincianas",
     description:
       "Noticias de San Miguel de Tucumán y el interior provinciano. Gobierno, municipios, sociedad, cultura y eventos locales.",
   },
