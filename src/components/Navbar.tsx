@@ -41,7 +41,7 @@ export default function Navbar({ hasOpinionNotes = true }: NavbarProps = {}) {
   };
 
   return (
-    <nav className="bg-ink sticky top-0 z-[110] border-t-[3px] border-brand shadow-[0_4px_0_0_var(--color-ink)]">
+    <nav className="bg-ink sticky top-0 z-40 border-t-[3px] border-brand shadow-[0_4px_0_0_var(--color-ink)]">
       <div className="max-w-7xl mx-auto px-4">
         {/* Desktop navbar */}
         <div className="hidden md:flex items-center">
