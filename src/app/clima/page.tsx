@@ -9,13 +9,24 @@ import AdRotator from "@/components/AdRotator";
 import { fetchCurrentWeather, fetchAllCitiesWeather } from "@/lib/weather";
 import { getActiveAds } from "@/lib/ads";
 import { getCachedBreakingNews } from "@/lib/sync-news";
+import type { Metadata } from "next";
 import type { Ad } from "@/lib/types";
 
 export const revalidate = 600;
 
-export const metadata = {
-  title: "Clima - ¡QUE NOTICIA!",
+export const metadata: Metadata = {
+  title: "Clima",
   description: "Pronóstico del tiempo para San Miguel de Tucumán y las principales ciudades de Argentina.",
+  alternates: { canonical: "/clima" },
+  openGraph: {
+    title: "Clima | ¡QUE NOTICIA!",
+    description: "Pronóstico del tiempo para San Miguel de Tucumán y las principales ciudades de Argentina.",
+    url: "https://www.quenoticia.com.ar/clima",
+  },
+  twitter: {
+    title: "Clima | ¡QUE NOTICIA!",
+    description: "Pronóstico del tiempo para San Miguel de Tucumán y las principales ciudades de Argentina.",
+  },
 };
 
 export default async function ClimaPage() {

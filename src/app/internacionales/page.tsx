@@ -5,6 +5,23 @@ import { getArticlesBySection, articles } from "@/lib/data";
 import { getActiveArticles } from "@/lib/articles";
 import { getActiveSponsored } from "@/lib/sponsored";
 import type { Article, SponsoredContent } from "@/lib/types";
+import type { Metadata } from "next";
+import { SECTION_META, SITE_URL, SITE_NAME } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: SECTION_META.internacionales.title,
+  description: SECTION_META.internacionales.description,
+  alternates: { canonical: "/internacionales" },
+  openGraph: {
+    title: `${SECTION_META.internacionales.title} | ${SITE_NAME}`,
+    description: SECTION_META.internacionales.description,
+    url: `${SITE_URL}/internacionales`,
+  },
+  twitter: {
+    title: `${SECTION_META.internacionales.title} | ${SITE_NAME}`,
+    description: SECTION_META.internacionales.description,
+  },
+};
 
 function sponsoredToArticle(s: SponsoredContent): Article {
   return {

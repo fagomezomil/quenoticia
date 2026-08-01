@@ -123,6 +123,7 @@ export default async function Home() {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 pb-4">
+        <h1 className="sr-only">¡QUE NOTICIA! — Medio regional de Tucumán</h1>
         {/* Urgente articles — full-width red alerts */}
         {urgentArticles.length > 0 && (
           <div className="mb-8 space-y-4">

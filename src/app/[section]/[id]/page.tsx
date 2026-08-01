@@ -12,6 +12,7 @@ import { getActiveAds } from "@/lib/ads";
 import { getArticleById as getCustomArticleById, getActiveArticles } from "@/lib/articles";
 import { getActiveSponsored } from "@/lib/sponsored";
 import { sectionConfig, Section, Article, SponsoredContent } from "@/lib/types";
+import { SITE_URL } from "@/lib/site";
 
 interface PageProps {
   params: Promise<{ section: string; id: string }>;
@@ -24,9 +25,28 @@ export async function generateMetadata({
   const customArticle = await getCustomArticleById(id);
   const article = customArticle ?? await fetchArticleDetail(id) ?? getSeedArticleById(id);
   if (!article) return { title: "Artículo no encontrado" };
+  const canonicalPath = `/${article.section}/${article.id}`;
   return {
-    title: `${article.title} - ¡QUE NOTICIA!`,
+    title: article.title,
     description: article.excerpt || article.title,
+    alternates: { canonical: canonicalPath },
+    openGraph: {
+      type: "article",
+      title: article.title,
+      description: article.excerpt || article.title,
+      url: `${SITE_URL}${canonicalPath}`,
+      ...(article.imageUrl ? {
+        images: [{ url: article.imageUrl, alt: article.imageAlt || article.title }],
+      } : {}),
+      ...(article.author ? { authors: [article.author] } : {}),
+      ...(article.date ? { publishedTime: article.date } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description: article.excerpt || article.title,
+      ...(article.imageUrl ? { images: [article.imageUrl] } : {}),
+    },
   };
 }
 

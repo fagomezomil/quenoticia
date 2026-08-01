@@ -11,6 +11,23 @@ import { getActiveColumnists } from "@/lib/columnists";
 import { getActiveSponsored } from "@/lib/sponsored";
 import { articles } from "@/lib/data";
 import type { Article, SponsoredContent } from "@/lib/types";
+import type { Metadata } from "next";
+import { SECTION_META, SITE_URL, SITE_NAME } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: SECTION_META.opinion.title,
+  description: SECTION_META.opinion.description,
+  alternates: { canonical: "/opinion" },
+  openGraph: {
+    title: `${SECTION_META.opinion.title} | ${SITE_NAME}`,
+    description: SECTION_META.opinion.description,
+    url: `${SITE_URL}/opinion`,
+  },
+  twitter: {
+    title: `${SECTION_META.opinion.title} | ${SITE_NAME}`,
+    description: SECTION_META.opinion.description,
+  },
+};
 
 function sponsoredToArticle(s: SponsoredContent): Article {
   return {

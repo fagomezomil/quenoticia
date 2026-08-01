@@ -2,6 +2,25 @@ import Header from "@/components/Header";
 import NavbarWrapper from "@/components/NavbarWrapper";
 import Footer from "@/components/Footer";
 import { sectionConfig } from "@/lib/data";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Publicitá en ¡QUE NOTICIA!",
+  description:
+    "Formatos publicitarios para tu marca en ¡QUE NOTICIA! — medio regional de Tucumán. Leaderboard, rectangle, sidebar, sticky footer, modal, contenido patrocinado y stories en redes.",
+  alternates: { canonical: "/contrata-aqui" },
+  openGraph: {
+    title: "Publicitá en ¡QUE NOTICIA!",
+    description:
+      "Formatos publicitarios para tu marca en ¡QUE NOTICIA! — medio regional de Tucumán.",
+    url: "https://www.quenoticia.com.ar/contrata-aqui",
+  },
+  twitter: {
+    title: "Publicitá en ¡QUE NOTICIA!",
+    description:
+      "Formatos publicitarios para tu marca en ¡QUE NOTICIA! — medio regional de Tucumán.",
+  },
+};
 
 const WHATSAPP_URL =
   "https://wa.me/5493815627057?text=Hola%2C%20quiero%20pedir%20presupuesto%20de%20publicidad";
