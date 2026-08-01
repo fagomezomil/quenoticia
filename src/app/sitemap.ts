@@ -2,10 +2,13 @@ import { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { getActiveArticles } from "@/lib/articles";
 import { getActiveColumnists } from "@/lib/columnists";
+import { getActiveSponsored } from "@/lib/sponsored";
+import { getActiveEvents } from "@/lib/agenda";
 import type { Section } from "@/lib/types";
 
 /** sitemap.xml dinámico — generado via Next.js Metadata API.
- *  Lista: home, secciones, /clima, /opinion, columnistas, articles activos.
+ *  Lista: home, secciones, /clima, /agenda, columnistas, articles activos,
+ *  contenidos patrocinados activos.
  *  Next.js divide automáticamente en chunks de 50k URLs si supera. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -20,6 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/tucuman`, lastModified: now, changeFrequency: "hourly", priority: 0.9 },
     { url: `${SITE_URL}/opinion`, lastModified: now, changeFrequency: "hourly", priority: 0.9 },
     { url: `${SITE_URL}/clima`, lastModified: now, changeFrequency: "daily", priority: 0.6 },
+    { url: `${SITE_URL}/agenda`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
   ];
 
   // Columnistas
@@ -53,5 +57,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // si falla Supabase, sitemap sigue con lo estático
   }
 
-  return [...staticPages, ...columnistPages, ...articlePages];
+  // Contenidos patrocinados activos (/patrocinado/[id])
+  let sponsoredPages: MetadataRoute.Sitemap = [];
+  try {
+    const sponsored = await getActiveSponsored();
+    sponsoredPages = sponsored.map((s) => ({
+      url: `${SITE_URL}/patrocinado/${s.id}`,
+      lastModified: s.updatedAt ? new Date(s.updatedAt) : now,
+      changeFrequency: "weekly",
+      priority: 0.5,
+    }));
+  } catch {
+    // si falla, no rompemos el sitemap
+  }
+
+  return [...staticPages, ...columnistPages, ...articlePages, ...sponsoredPages];
 }

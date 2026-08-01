@@ -362,7 +362,7 @@ function Pagination({
   }
 
   const pageHref = (p: number) =>
-    p === 1 ? sectionPath : `${sectionPath}?page=${p}`;
+    p === 1 ? sectionPath : `${sectionPath}/pagina/${p}`;
 
   return (
     <nav

@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import NavbarWrapper from "@/components/NavbarWrapper";
 import BreakingNews from "@/components/BreakingNews";
@@ -11,28 +13,11 @@ import { getActiveColumnists } from "@/lib/columnists";
 import { getActiveSponsored } from "@/lib/sponsored";
 import { articles } from "@/lib/data";
 import type { Article, SponsoredContent } from "@/lib/types";
-import type { Metadata } from "next";
 import { SECTION_META, SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/site";
 import JsonLd from "@/components/JsonLd";
 import { sectionBreadcrumbLd } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: SECTION_META.opinion.title,
-  description: SECTION_META.opinion.description,
-  alternates: { canonical: "/opinion" },
-  openGraph: {
-    title: `${SECTION_META.opinion.title} | ${SITE_NAME}`,
-    description: SECTION_META.opinion.description,
-    url: `${SITE_URL}/opinion`,
-    type: "website",
-    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: SITE_NAME }],
-  },
-  twitter: {
-    title: `${SECTION_META.opinion.title} | ${SITE_NAME}`,
-    description: SECTION_META.opinion.description,
-    images: [DEFAULT_OG_IMAGE],
-  },
-};
+export const revalidate = 300;
 
 function sponsoredToArticle(s: SponsoredContent): Article {
   return {
@@ -51,12 +36,43 @@ function sponsoredToArticle(s: SponsoredContent): Article {
   };
 }
 
-export const revalidate = 300;
+interface PageProps {
+  params: Promise<{ page: string }>;
+}
 
-export default async function OpinionPage() {
-  const page = 1;
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { page: rawPage } = await params;
+  const pageNum = Math.max(1, parseInt(rawPage, 10) || 1);
+  const canonical = `/opinion/pagina/${pageNum}`;
+  return {
+    title: `${SECTION_META.opinion.title} — Página ${pageNum}`,
+    description: SECTION_META.opinion.description,
+    robots: { index: false, follow: true },
+    alternates: { canonical },
+    openGraph: {
+      title: `${SECTION_META.opinion.title} — Página ${pageNum} | ${SITE_NAME}`,
+      description: SECTION_META.opinion.description,
+      url: `${SITE_URL}${canonical}`,
+      type: "website",
+      images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: SITE_NAME }],
+    },
+    twitter: {
+      title: `${SECTION_META.opinion.title} — Página ${pageNum} | ${SITE_NAME}`,
+      description: SECTION_META.opinion.description,
+      images: [DEFAULT_OG_IMAGE],
+    },
+  };
+}
 
-  // Opinion is manual-only — no FreeNewsApi, no scraper.
+export async function generateStaticParams() {
+  return [{ page: "2" }];
+}
+
+export default async function OpinionPaginationPage({ params }: PageProps) {
+  const { page: rawPage } = await params;
+  const page = Math.max(1, parseInt(rawPage, 10) || 1);
+  if (page < 2) notFound();
+
   const [ads, customArticles, sponsoredContent, columnists, breakingData] = await Promise.all([
     getActiveAds(undefined, "opinion"),
     getActiveArticles("opinion"),
@@ -65,15 +81,12 @@ export default async function OpinionPage() {
     fetchBreakingNews(),
   ]);
 
-  // getActiveArticles already orders by sort_date desc
   const sponsoredAsArticles = sponsoredContent.map(sponsoredToArticle);
   const allItems = [...customArticles, ...sponsoredAsArticles];
-
   const breaking = breakingData ?? articles.filter((a) => a.breaking);
   const stickyFooterAd = ads.find((a) => a.type === "sticky_footer") || null;
   const leaderboardAds = ads.filter((a) => a.type === "leaderboard");
   const sidebarAds = ads.filter((a) => a.type === "sidebar");
-  // Top y bottom: si hay 1 solo, va arriba. Si hay 2+, uno arriba y otro abajo.
   const leaderboardTop = leaderboardAds[0] || null;
   const leaderboardBottom = leaderboardAds.length > 1 ? leaderboardAds[1] : null;
 

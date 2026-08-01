@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: "Publicitá — Formatos publicitarios",
   description:
     "Formatos publicitarios para tu marca en ¡QUE NOTICIA! — medio regional de Tucumán. Leaderboard, modal, sidebar, sticky footer y contenido patrocinado.",
+  // Página comercial interna — no aporta valor indexable en SERPs, el CTA
+  // se resuelve por WhatsApp. Noindex evita duplicate/thin content.
+  robots: { index: false, follow: true },
   alternates: { canonical: "/contrata-aqui" },
   openGraph: {
     title: "Publicitá en " + SITE_NAME,

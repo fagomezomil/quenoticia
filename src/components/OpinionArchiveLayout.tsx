@@ -154,7 +154,7 @@ export default function OpinionArchiveLayout({
             <nav className="mt-12 flex items-center justify-between border-t border-rule-opinion pt-4">
               {currentPage > 1 ? (
                 <Link
-                  href={`/opinion?page=${currentPage - 1}`}
+                  href={currentPage === 2 ? "/opinion" : `/opinion/pagina/${currentPage - 1}`}
                   className="text-sm font-bold uppercase tracking-widest text-opinion hover:underline font-[family-name:var(--font-heading)]"
                 >
                   ← Anterior
@@ -167,7 +167,7 @@ export default function OpinionArchiveLayout({
               </span>
               {currentPage < totalPages ? (
                 <Link
-                  href={`/opinion?page=${currentPage + 1}`}
+                  href={`/opinion/pagina/${currentPage + 1}`}
                   className="text-sm font-bold uppercase tracking-widest text-opinion hover:underline font-[family-name:var(--font-heading)]"
                 >
                   Siguiente →
