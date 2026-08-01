@@ -118,7 +118,9 @@ export default async function ArticlePage({ params }: PageProps) {
     "@type": "NewsArticle",
     headline: article.title,
     description: article.excerpt || article.title,
-    datePublished: article.date,
+    // Scraper articles a veces no populan article.date — fallback a dateModified
+    // (updated_at o created_at) para que Google no rechace el schema.
+    datePublished: article.date || dateModified,
     dateModified,
     url: articleUrl,
     ...(article.imageUrl ? { image: [article.imageUrl] } : {}),
