@@ -134,9 +134,7 @@ export default async function Home() {
         )}
 
         {/* Hero Editorial */}
-        <AnimateIn direction="up">
-          <HeroEditorial articles={sliderArticles} />
-        </AnimateIn>
+        <HeroEditorial articles={sliderArticles} />
 
         <div className="rule my-6" />
 
