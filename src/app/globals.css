@@ -3,8 +3,6 @@
 :root {
   --background: #f5efe4;
   --foreground: #0a0a0a;
-  --font-heading: 'Oswald', 'Helvetica Neue', Arial, sans-serif;
-  --font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
 
   /* Section colors — section identities, kept distinct from brand naranja */
   --color-politica: #e63946;
@@ -62,8 +60,6 @@
   --color-cat-cultural: #db2777;
   --color-cat-turistico: #0891b2;
   --color-cat-deportivo: #65a30d;
-  --font-heading: 'Oswald', 'Helvetica Neue', Arial, sans-serif;
-  --font-body: 'Inter', 'Helvetica Neue', Arial, sans-serif;
 }
 
 body {

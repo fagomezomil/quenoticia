@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Oswald, Inter } from "next/font/google";
 import AuthProvider from "@/components/providers/AuthProvider";
 import JsonLd from "@/components/JsonLd";
 import {
@@ -12,6 +13,20 @@ import {
 } from "@/lib/site";
 import { SOCIAL_LINKS } from "@/lib/social";
 import "./globals.css";
+
+const oswald = Oswald({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-heading",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -89,16 +104,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es-AR" className="h-full antialiased">
+    <html lang="es-AR" className={`h-full antialiased ${oswald.variable} ${inter.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://uhuidlistqoonyqtpyvh.supabase.co" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://uhuidlistqoonyqtpyvh.supabase.co" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
       </head>
       <body className="min-h-full flex flex-col bg-cream font-[family-name:var(--font-body)] overflow-x-hidden">
         <JsonLd data={organizationLd} />
