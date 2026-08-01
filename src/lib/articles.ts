@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createPublicClient } from "@/lib/supabase/server";
 import type { Section, ArticleLayout, CustomArticle, Comment } from "@/lib/types";
 
 function mapRowToArticle(row: Record<string, unknown>): CustomArticle {
@@ -32,7 +32,7 @@ function mapRowToArticle(row: Record<string, unknown>): CustomArticle {
  *  Query mínima (limit 1) — usada por NavbarWrapper para decidir si mostrar la pestaña Opinión. */
 export async function hasOpinionNotes(): Promise<boolean> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("articles")
       .select("id")
@@ -48,7 +48,7 @@ export async function hasOpinionNotes(): Promise<boolean> {
 
 export async function getActiveArticles(section?: Section): Promise<CustomArticle[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     let query = supabase
       .from("articles")
       .select("*")
@@ -70,7 +70,7 @@ export async function getActiveArticles(section?: Section): Promise<CustomArticl
 /** Articles by columnist, newest first. */
 export async function getArticlesByColumnist(columnistId: string): Promise<CustomArticle[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("articles")
       .select("*")
@@ -86,7 +86,7 @@ export async function getArticlesByColumnist(columnistId: string): Promise<Custo
 }
 export async function getFeaturedArticles(limit = 6): Promise<CustomArticle[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("articles")
       .select("*")
@@ -130,7 +130,7 @@ export async function getAllArticles(): Promise<CustomArticle[]> {
 
 export async function getArticleById(id: string): Promise<CustomArticle | null> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     // Try fetching without active filter first (admin can see all articles)
     // If RLS only allows active, this will still work for public articles
     const { data, error } = await supabase
@@ -148,7 +148,7 @@ export async function getArticleById(id: string): Promise<CustomArticle | null> 
 
 export async function getComments(articleId: string): Promise<Comment[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("comments")
       .select("id, article_id, user_id, content, created_at, author_name, author_avatar_url")
@@ -174,7 +174,7 @@ export async function getComments(articleId: string): Promise<Comment[]> {
 export async function getCommentCounts(articleIds: string[]): Promise<Record<string, number>> {
   if (articleIds.length === 0) return {};
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("comments")
       .select("article_id")

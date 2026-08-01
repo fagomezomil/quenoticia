@@ -1,9 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createPublicClient } from "@/lib/supabase/server";
 import type { Ad, AdType, Section } from "@/lib/types";
 
 export async function getActiveAds(type?: AdType, section?: Section): Promise<Ad[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
 
     let query = supabase
       .from("ads")

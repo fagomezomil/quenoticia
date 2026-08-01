@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createPublicClient } from "@/lib/supabase/server";
 import type { SponsoredContent, Section } from "@/lib/types";
 
 function mapRow(row: Record<string, unknown>): SponsoredContent {
@@ -44,7 +44,7 @@ export async function getAllSponsored(): Promise<SponsoredContent[]> {
 }
 
 export async function getActiveSponsored(section?: Section, homepageOnly?: boolean, sidebarOnly?: boolean): Promise<SponsoredContent[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const now = new Date().toISOString();
 
   let query = supabase

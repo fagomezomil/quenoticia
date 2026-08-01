@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createPublicClient } from "@/lib/supabase/server";
 import type { AgendaCategory, AgendaEvent } from "@/lib/types";
 
 interface EventRow {
@@ -86,7 +86,7 @@ function mapRowToAdminEvent(row: EventRow): AdminEvent {
  * Returns empty array on error (layout shows empty state).
  */
 export async function getActiveEvents(): Promise<AgendaEvent[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("events")
     .select("*")

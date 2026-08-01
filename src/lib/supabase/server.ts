@@ -1,6 +1,22 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+
+/** Anonymous public client — no cookies, no user session.
+ *  Use for public read-only queries (articles, ads, columnists, cached_articles).
+ *  RLS applies — only rows visible to the anon role are returned.
+ *  Does NOT call cookies() → does NOT opt the page into dynamic rendering.
+ *  This is the key difference vs createClient(): pages using createPublicClient()
+ *  stay statically renderable + cacheable (cache-control: public), fixing TTFB. */
+export function createPublicClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY env vars");
+  }
+  return createSupabaseClient(supabaseUrl, supabaseKey);
+}
 
 export async function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

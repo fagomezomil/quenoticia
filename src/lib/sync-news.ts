@@ -349,8 +349,8 @@ async function backfillArticle(row: Record<string, unknown>): Promise<void> {
 }
 
 export async function getCachedArticles(section: Section): Promise<Article[]> {
-  const { createClient: createServerClient } = await import("@/lib/supabase/server");
-  const supabase = await createServerClient();
+  const { createPublicClient } = await import("@/lib/supabase/server");
+  const supabase = createPublicClient();
   // Filtro de frescura: si el sync no corrio en 24h, notas stale no alimentan el hero.
   const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase
@@ -394,8 +394,8 @@ export async function getCachedArticles(section: Section): Promise<Article[]> {
 }
 
 export async function getCachedArticleDetail(uuid: string): Promise<Article | null> {
-  const { createClient: createServerClient } = await import("@/lib/supabase/server");
-  const supabase = await createServerClient();
+  const { createPublicClient } = await import("@/lib/supabase/server");
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("cached_articles")
     .select("*")
@@ -456,8 +456,8 @@ export async function getCachedArticleDetail(uuid: string): Promise<Article | nu
 }
 
 export async function getCachedBreakingNews(): Promise<Article[] | null> {
-  const { createClient: createServerClient } = await import("@/lib/supabase/server");
-  const supabase = await createServerClient();
+  const { createPublicClient } = await import("@/lib/supabase/server");
+  const supabase = createPublicClient();
   // Get the 5 most recent articles across all sections (no separate API call)
   const { data, error } = await supabase
     .from("cached_articles")

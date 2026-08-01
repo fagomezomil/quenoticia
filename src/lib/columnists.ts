@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createPublicClient } from "@/lib/supabase/server";
 import type { Columnist } from "@/lib/types";
 import { slugify } from "@/lib/slugify";
 
@@ -20,7 +20,7 @@ function mapRowToColumnist(row: Record<string, unknown>): Columnist {
 /** Public-facing: only active columnists. */
 export async function getActiveColumnists(): Promise<Columnist[]> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("columnists")
       .select("*")
@@ -68,7 +68,7 @@ export async function getColumnistById(id: string): Promise<Columnist | null> {
 
 export async function getColumnistBySlug(slug: string): Promise<Columnist | null> {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("columnists")
       .select("*")
