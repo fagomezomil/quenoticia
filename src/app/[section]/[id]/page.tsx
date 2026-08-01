@@ -6,6 +6,7 @@ import BreakingNews from "@/components/BreakingNews";
 import Footer from "@/components/Footer";
 import ArticleDetail from "@/components/ArticleDetail";
 import AdStickyFooter from "@/components/AdStickyFooter";
+import JsonLd from "@/components/JsonLd";
 import { fetchArticleDetail, fetchSectionArticles, fetchBreakingNews } from "@/lib/api";
 import { getArticleById as getSeedArticleById, getArticlesBySection, articles } from "@/lib/data";
 import { getActiveAds } from "@/lib/ads";
@@ -105,8 +106,50 @@ export default async function ArticlePage({ params }: PageProps) {
   }));
   const sponsoredIds = new Set(sponsoredSidebar.map((s) => s.id));
 
+  const articleUrl = `${SITE_URL}/${article.section}/${article.id}`;
+  const sectionCfg = sectionConfig[article.section];
+  const dateModified =
+    "updated_at" in article && typeof article.updated_at === "string"
+      ? article.updated_at
+      : article.date;
+
+  const newsArticleLd = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: article.title,
+    description: article.excerpt || article.title,
+    datePublished: article.date,
+    dateModified,
+    url: articleUrl,
+    ...(article.imageUrl ? { image: [article.imageUrl] } : {}),
+    author: article.author
+      ? { "@type": "Person", name: article.author }
+      : { "@id": `${SITE_URL}/#organization` },
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
+    articleSection: sectionCfg.label,
+    inLanguage: "es-AR",
+  };
+
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Inicio", item: SITE_URL },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: sectionCfg.label,
+        item: `${SITE_URL}${sectionCfg.path}`,
+      },
+      { "@type": "ListItem", position: 3, name: article.title, item: articleUrl },
+    ],
+  };
+
   return (
     <>
+      <JsonLd data={newsArticleLd} />
+      <JsonLd data={breadcrumbLd} />
       <Header />
       <NavbarWrapper />
       <BreakingNews articles={breaking} />

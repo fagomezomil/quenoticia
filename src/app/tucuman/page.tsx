@@ -6,6 +6,8 @@ import { getActiveSponsored } from "@/lib/sponsored";
 import type { Article, SponsoredContent } from "@/lib/types";
 import type { Metadata } from "next";
 import { SECTION_META, SITE_URL, SITE_NAME } from "@/lib/site";
+import JsonLd from "@/components/JsonLd";
+import { sectionBreadcrumbLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: SECTION_META.tucuman.title,
@@ -66,8 +68,10 @@ export default async function TucumanPage({ searchParams }: Props) {
   const rectangleAds = ads.filter((a) => a.type === "rectangle");
 
   return (
-    <SectionPageLayout
-      section="tucuman"
+    <>
+      <JsonLd data={sectionBreadcrumbLd("tucuman")} />
+      <SectionPageLayout
+        section="tucuman"
       articles={sectionArticles}
       subtitle="Noticias de la provincia de Tucumán y la región del NOA."
       allArticles={[...customArticles, ...articles]}
@@ -77,5 +81,6 @@ export default async function TucumanPage({ searchParams }: Props) {
       sponsoredItems={sponsoredItems}
       page={page}
     />
+    </>
   );
 }

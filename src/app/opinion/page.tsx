@@ -13,6 +13,8 @@ import { articles } from "@/lib/data";
 import type { Article, SponsoredContent } from "@/lib/types";
 import type { Metadata } from "next";
 import { SECTION_META, SITE_URL, SITE_NAME } from "@/lib/site";
+import JsonLd from "@/components/JsonLd";
+import { sectionBreadcrumbLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: SECTION_META.opinion.title,
@@ -79,6 +81,7 @@ export default async function OpinionPage({ searchParams }: Props) {
 
   return (
     <>
+      <JsonLd data={sectionBreadcrumbLd("opinion")} />
       <Header />
       <NavbarWrapper />
       <BreakingNews articles={breaking} />

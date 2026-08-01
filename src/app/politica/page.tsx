@@ -7,6 +7,8 @@ import { getActiveSponsored } from "@/lib/sponsored";
 import type { Article, SponsoredContent } from "@/lib/types";
 import type { Metadata } from "next";
 import { SECTION_META, SITE_URL, SITE_NAME } from "@/lib/site";
+import JsonLd from "@/components/JsonLd";
+import { sectionBreadcrumbLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: SECTION_META.politica.title,
@@ -67,8 +69,10 @@ export default async function PoliticaPage({ searchParams }: Props) {
   const rectangleAds = ads.filter((a) => a.type === "rectangle");
 
   return (
-    <SectionPageLayout
-      section="politica"
+    <>
+      <JsonLd data={sectionBreadcrumbLd("politica")} />
+      <SectionPageLayout
+        section="politica"
       articles={sectionArticles}
       subtitle="Las noticias más relevantes del ámbito político nacional e internacional."
       allArticles={apiArticles ? [...customArticles, ...articles, ...apiArticles] : [...customArticles, ...articles]}
@@ -78,5 +82,6 @@ export default async function PoliticaPage({ searchParams }: Props) {
       sponsoredItems={sponsoredItems}
       page={page}
     />
+    </>
   );
 }

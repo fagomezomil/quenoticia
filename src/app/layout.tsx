@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AuthProvider from "@/components/providers/AuthProvider";
+import JsonLd from "@/components/JsonLd";
 import {
   SITE_URL,
   SITE_NAME,
@@ -9,6 +10,7 @@ import {
   SITE_TWITTER,
   DEFAULT_OG_IMAGE,
 } from "@/lib/site";
+import { SOCIAL_LINKS } from "@/lib/social";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -58,6 +60,29 @@ export const metadata: Metadata = {
   },
 };
 
+/** Structured data global: Organization (publisher) + WebSite.
+ *  Sin SearchAction porque el sitio no tiene search endpoint todavía. */
+const organizationLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": `${SITE_URL}/#organization`,
+  name: SITE_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}${DEFAULT_OG_IMAGE}`,
+  description: SITE_DESCRIPTION,
+  sameAs: [SOCIAL_LINKS.facebook, SOCIAL_LINKS.instagram].filter(Boolean),
+};
+
+const websiteLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": `${SITE_URL}/#website`,
+  url: SITE_URL,
+  name: SITE_NAME,
+  inLanguage: "es-AR",
+  publisher: { "@id": `${SITE_URL}/#organization` },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -74,6 +99,8 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-cream font-[family-name:var(--font-body)] overflow-x-hidden">
+        <JsonLd data={organizationLd} />
+        <JsonLd data={websiteLd} />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
