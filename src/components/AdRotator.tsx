@@ -117,6 +117,7 @@ export default function AdRotator({ ads, size, className = "" }: AdRotatorProps)
           src={currentAd.image_url!}
           alt={currentAd.title || "Aviso publicitario"}
           className="w-full h-full object-contain"
+          fetchPriority="low"
         />
       </picture>
     </div>
@@ -151,6 +152,7 @@ function SingleAd({
           src={ad.image_url!}
           alt={ad.title || "Aviso publicitario"}
           className="w-full h-full object-contain"
+          fetchPriority="low"
         />
       </picture>
     </div>

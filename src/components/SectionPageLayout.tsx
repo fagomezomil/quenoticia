@@ -116,6 +116,7 @@ export default function SectionPageLayout({
             <div className="lg:col-span-2">
               <Link
                 href={sponsoredIds.has(featured.id) ? `/patrocinado/${featured.id}` : `/${featured.section}/${featured.id}`}
+                prefetch={false}
                 className="group relative overflow-hidden bg-ink min-h-[260px] md:min-h-[440px] block border-ink-3 shadow-hard"
               >
                 {featured.imageUrl ? (
@@ -182,6 +183,7 @@ export default function SectionPageLayout({
                   <Link
                     key={a.id}
                     href={href}
+                    prefetch={false}
                     className="group flex gap-3 py-3 border-b-2 border-ink last:border-0 hover:bg-brand/10 transition-colors -mx-1 px-1"
                   >
                     {a.imageUrl ? (

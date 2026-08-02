@@ -108,7 +108,7 @@ export default function ArticleCard({
   if (variant === "hero") {
     return (
       <article className="group">
-        <Link href={href}>
+        <Link href={href} prefetch={false}>
           {article.imageUrl ? (
             <NewsImage src={article.imageUrl} alt={article.imageAlt} sectionColor={cfg.color} variant="hero" />
           ) : (
@@ -159,7 +159,7 @@ export default function ArticleCard({
   if (variant === "featured") {
     return (
       <article className="group bg-paper border-ink-2 shadow-hard h-full">
-        <Link href={href} className="flex flex-col sm:flex-row h-full">
+        <Link href={href} prefetch={false} className="flex flex-col sm:flex-row h-full">
           <div
             className="sm:w-1/2 h-36 sm:h-auto flex items-center justify-center relative overflow-hidden"
             style={{ borderTop: `3px solid ${cfg.color}` }}
@@ -205,7 +205,7 @@ export default function ArticleCard({
     return (
       <article className="group">
         <Link
-          href={href}
+          href={href} prefetch={false}
           className="block relative w-full min-h-[280px] md:min-h-[420px] lg:min-h-[550px] overflow-hidden bg-ink border-ink-3 shadow-hard-lg"
         >
           {article.imageUrl ? (
@@ -264,7 +264,7 @@ export default function ArticleCard({
   if (variant === "compact") {
     return (
       <article className="group py-3 border-b-2 border-ink last:border-0">
-        <Link href={href} className="flex gap-3">
+        <Link href={href} prefetch={false} className="flex gap-3">
           {article.imageUrl && (
             <NewsImage
               src={article.imageUrl}
@@ -304,7 +304,7 @@ export default function ArticleCard({
   if (sponsored) {
     return (
       <article className="group bg-paper border-ink-2 shadow-hard h-full">
-        <Link href={href} className="flex flex-col h-full">
+        <Link href={href} prefetch={false} className="flex flex-col h-full">
           <div
             className="h-36 sm:h-44 flex items-center justify-center relative overflow-hidden"
             style={{ borderTop: `3px solid ${cfg.color}` }}
@@ -346,7 +346,7 @@ export default function ArticleCard({
   // standard
   return (
     <article className="group bg-paper border-ink-2 shadow-hard h-full">
-      <Link href={href} className="flex flex-col h-full">
+      <Link href={href} prefetch={false} className="flex flex-col h-full">
         <div
           className="h-36 sm:h-44 flex items-center justify-center relative overflow-hidden"
           style={{ borderTop: `3px solid ${cfg.color}` }}
