@@ -34,11 +34,8 @@ export async function GET(request: Request) {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  // Ventana: 12 horas atrás (cubre scraper 2x/día)
-  const since = new Date(Date.now() - 12 * 60 * 60 * 1000);
-
   try {
-    const stories = await buildStories(since);
+    const stories = await buildStories();
 
     if (stories.slideImageUrls.length === 0) {
       await saveSocialPost({

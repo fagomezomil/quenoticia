@@ -24,9 +24,58 @@ export interface StoriesResult {
   sections: Section[];
 }
 
-function turnoFromDate(d: Date): "mañana" | "noche" {
-  // Antes de las 14:00 → mañana, sino noche
-  return d.getHours() < 14 ? "mañana" : "noche";
+type Turno = "mañana" | "noche";
+
+function turnoFromDate(d: Date): Turno {
+  // Convertir a ART (UTC-3). Corte: 18:00 ART.
+  // Turno mañana = 06:00–17:59 ART, turno noche = 18:00–05:59 ART.
+  const artHour = (d.getUTCHours() - 3 + 24) % 24;
+  return artHour >= 6 && artHour < 18 ? "mañana" : "noche";
+}
+
+/** Calcula el `since` para el turno actual:
+ *  - mañana → 08:00 ART de hoy (= 11:00 UTC)
+ *  - noche  → 20:00 ART de hoy (= 23:00 UTC)
+ *  Coincide con el horario del scraper correspondiente. */
+function getSinceForTurno(now: Date, turno: Turno): Date {
+  const artOffsetMs = -3 * 60 * 60 * 1000;
+  const artNow = new Date(now.getTime() + artOffsetMs);
+  const y = artNow.getUTCFullYear();
+  const m = artNow.getUTCMonth();
+  const d = artNow.getUTCDate();
+  const hourArt = turno === "mañana" ? 8 : 20;
+  const sinceArt = new Date(Date.UTC(y, m, d, hourArt, 0, 0));
+  // Convertir de ART a UTC: restar el offset (artOffsetMs es negativo → resta suma)
+  return new Date(sinceArt.getTime() - artOffsetMs);
+}
+
+/** Devuelve los article_ids ya publicados en el TURNO OPUESTO dentro de las últimas 24h.
+ *  Las publicaciones del mismo turno NO se excluyen (así stories puede reusar las del
+ *  carrusel del mismo turno). Las del turno opuesto sí (no se repite entre mañana y noche). */
+async function getRecentlyPublishedArticleIds(currentTurno: Turno): Promise<Set<string>> {
+  const admin = await getSupabaseAdmin();
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await admin
+    .from("social_posts")
+    .select("article_ids, published_at, created_at")
+    .in("status", ["published", "pending"])
+    .gte("created_at", since);
+  if (error) {
+    console.error("getRecentlyPublishedArticleIds error:", error);
+    return new Set();
+  }
+
+  const excludeIds = new Set<string>();
+  for (const post of (data as Array<{ article_ids: (string | null)[]; published_at: string | null; created_at: string }> | null) ?? []) {
+    const ts = post.published_at ? new Date(post.published_at) : new Date(post.created_at);
+    const postTurno = turnoFromDate(ts);
+    if (postTurno !== currentTurno) {
+      for (const id of post.article_ids ?? []) {
+        if (id) excludeIds.add(id);
+      }
+    }
+  }
+  return excludeIds;
 }
 
 /** Formatea created_at (ISO) → DD/MM/YYYY para mostrar en el slide. */
@@ -95,12 +144,15 @@ async function mapWithConcurrency<T, R>(
 }
 
 /** Orquesta: select → generate slides → upload → caption.
- *  - since: ventana para considerar notas "nuevas"
- *  - Devuelve todo lo necesario para llamar a Buffer y registrar en social_posts. */
-export async function buildCarousel(since: Date): Promise<CarouselResult> {
-  const notes = await selectNotesForCarousel(since);
+ *  Calcula el turno actual (mañana/noche), el `since` según scraper correspondiente
+ *  (08:00 o 20:00 ART) y los `excludeIds` de publicaciones del turno opuesto.
+ *  Devuelve todo lo necesario para llamar a Buffer y registrar en social_posts. */
+export async function buildCarousel(): Promise<CarouselResult> {
   const now = new Date();
   const turno = turnoFromDate(now);
+  const since = getSinceForTurno(now, turno);
+  const excludeIds = await getRecentlyPublishedArticleIds(turno);
+  const notes = await selectNotesForCarousel(since, excludeIds);
   const timestamp = now.getTime();
 
   const sections: Section[] = notes.map((n) => (n ? n.section : ("politica" as Section)));
@@ -135,10 +187,14 @@ export async function buildCarousel(since: Date): Promise<CarouselResult> {
 }
 
 /** Orquesta stories: select 10 (2 por sección) → generate 10 PNGs 9:16 → upload.
+ *  Calcula turno, since y excludeIds igual que buildCarousel.
  *  Devuelve las 10 URLs + metadata para publicarlas como stories IG/FB. */
-export async function buildStories(since: Date): Promise<StoriesResult> {
-  const notes = await selectNotesForStories(since);
+export async function buildStories(): Promise<StoriesResult> {
   const now = new Date();
+  const turno = turnoFromDate(now);
+  const since = getSinceForTurno(now, turno);
+  const excludeIds = await getRecentlyPublishedArticleIds(turno);
+  const notes = await selectNotesForStories(since, excludeIds);
   const timestamp = now.getTime();
 
   const sections: Section[] = notes.map((n) =>

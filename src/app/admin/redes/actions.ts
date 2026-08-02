@@ -130,8 +130,7 @@ export async function retrySocialPost(postId: string) {
 /** Disparar manualmente una generación nueva (dry-run: guarda sin publicar). */
 export async function triggerNewPostDryRun() {
   await requireAdminAction();
-  const since = new Date(Date.now() - 12 * 60 * 60 * 1000);
-  const carousel = await buildCarousel(since);
+  const carousel = await buildCarousel();
 
   if (carousel.slideImageUrls.length === 0) {
     return { success: false, error: "Sin notas para publicar" };
@@ -158,8 +157,7 @@ export async function triggerNewPostDryRun() {
 /** Publicar ahora mismo a Buffer (real, no dry-run). Genera slides y manda a los canales. */
 export async function publishNow() {
   await requireAdminAction();
-  const since = new Date(Date.now() - 12 * 60 * 60 * 1000);
-  const carousel = await buildCarousel(since);
+  const carousel = await buildCarousel();
 
   if (carousel.slideImageUrls.length === 0) {
     return { success: false, error: "Sin notas para publicar" };
@@ -445,8 +443,7 @@ export async function deleteSocialPost(postId: string) {
  *  (2 por sección) y los publica como stories IG/FB vía Buffer. */
 export async function publishStoriesNow() {
   await requireAdminAction();
-  const since = new Date(Date.now() - 12 * 60 * 60 * 1000);
-  const stories = await buildStories(since);
+  const stories = await buildStories();
 
   if (stories.slideImageUrls.length === 0) {
     return { success: false, error: "Sin notas para publicar stories" };
@@ -511,8 +508,7 @@ export async function publishStoriesNow() {
 /** Generar stories en dry-run (guarda sin publicar). */
 export async function triggerStoriesDryRun() {
   await requireAdminAction();
-  const since = new Date(Date.now() - 12 * 60 * 60 * 1000);
-  const stories = await buildStories(since);
+  const stories = await buildStories();
 
   if (stories.slideImageUrls.length === 0) {
     return { success: false, error: "Sin notas para stories" };
