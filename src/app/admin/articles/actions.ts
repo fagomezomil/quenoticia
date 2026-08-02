@@ -3,6 +3,7 @@
 import { createClient, requireEditorAction } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { notifyArticleChange } from "@/lib/indexnow";
+import { notifyArticleChangeGoogle } from "@/lib/google-indexing";
 
 // Whitelist de campos permitidos en create/update — todo lo que no esté acá se descarta.
 const ARTICLE_FIELDS = [
@@ -98,6 +99,8 @@ export async function updateArticle(payload: UpdateArticlePayload) {
 
   // IndexNow: notificar push a Bing/Yandex (best-effort, no bloqueante)
   void notifyArticleChange(payload.section, id);
+  // Google Indexing API: notificar push a Google Web Search
+  void notifyArticleChangeGoogle(payload.section, id);
 
   return { error: null };
 }
@@ -168,6 +171,8 @@ export async function createArticle(payload: CreateArticlePayload) {
 
   // IndexNow: notificar push a Bing/Yandex (best-effort, no bloqueante)
   void notifyArticleChange(payload.section, result.id);
+  // Google Indexing API: notificar push a Google Web Search
+  void notifyArticleChangeGoogle(payload.section, result.id);
 
   return { error: null, id: result.id };
 }
