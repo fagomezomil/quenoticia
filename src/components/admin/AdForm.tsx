@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import type { Ad, AdType, Section } from "@/lib/types";
 import { sectionConfig } from "@/lib/types";
+import { saveAd } from "@/app/admin/ads/actions";
 
 interface ClientOption {
   id: string;
@@ -81,7 +81,7 @@ export default function AdForm({ ad, clients }: AdFormProps) {
   const [previewUrl, setPreviewUrl] = useState(ad?.image_url ?? "");
   const [mobileImageFile, setMobileImageFile] = useState<File | null>(null);
   const [mobilePreviewUrl, setMobilePreviewUrl] = useState(ad?.mobile_image_url ?? "");
-  const [saving, setSaving] = useState(false);
+  const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,94 +100,40 @@ export default function AdForm({ ad, clients }: AdFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setError("");
 
-    const supabase = createClient();
-    let imageUrl = ad?.image_url ?? null;
-    let mobileImageUrl = ad?.mobile_image_url ?? null;
+    const formData = new FormData();
+    if (ad) formData.set("id", ad.id);
+    formData.set("title", title);
+    formData.set("type", type);
+    formData.set("section", section);
+    formData.set("client_id", clientId);
+    formData.set("link_url", linkUrl);
+    if (imageFile) formData.set("image_file", imageFile);
+    if (mobileImageFile) formData.set("mobile_image_file", mobileImageFile);
+    if (ad?.image_url) formData.set("existing_image_url", ad.image_url);
+    if (ad?.mobile_image_url) formData.set("existing_mobile_image_url", ad.mobile_image_url);
+    if (active) formData.set("active", "on");
+    formData.set("priority", String(priority));
+    formData.set("display_duration", String(displayDuration));
+    formData.set(
+      "starts_at",
+      startsAtDate ? new Date(`${startsAtDate}T${startsAtTime}`).toISOString() : "",
+    );
+    formData.set(
+      "expires_at",
+      expiresAtDate ? new Date(`${expiresAtDate}T${expiresAtTime}`).toISOString() : "",
+    );
 
-    try {
-      // Upload desktop image if a new file was selected
-      if (imageFile) {
-        const ext = imageFile.name.split(".").pop();
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: uploadError } = await supabase.storage
-          .from("media")
-          .upload(path, imageFile);
-
-        if (uploadError) {
-          setError("Error al subir la imagen: " + uploadError.message);
-          setSaving(false);
-          return;
-        }
-
-        const { data: urlData } = supabase.storage.from("media").getPublicUrl(path);
-        imageUrl = urlData.publicUrl;
+    startTransition(async () => {
+      const result = await saveAd(null, formData);
+      if (result?.error) {
+        setError(result.error);
+        return;
       }
-
-      // Upload mobile image if a new file was selected
-      if (mobileImageFile) {
-        const ext = mobileImageFile.name.split(".").pop();
-        const path = `${Date.now()}-mobile-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: uploadError } = await supabase.storage
-          .from("media")
-          .upload(path, mobileImageFile);
-
-        if (uploadError) {
-          setError("Error al subir la imagen mobile: " + uploadError.message);
-          setSaving(false);
-          return;
-        }
-
-        const { data: urlData } = supabase.storage.from("media").getPublicUrl(path);
-        mobileImageUrl = urlData.publicUrl;
-      }
-
-      const payload = {
-        title,
-        type,
-        section: section || null,
-        client_id: clientId || null,
-        link_url: linkUrl || null,
-        image_url: imageUrl,
-        mobile_image_url: mobileImageUrl,
-        active,
-        priority,
-        display_duration: displayDuration,
-        starts_at: startsAtDate ? new Date(`${startsAtDate}T${startsAtTime}`).toISOString() : null,
-        expires_at: expiresAtDate ? new Date(`${expiresAtDate}T${expiresAtTime}`).toISOString() : null,
-      };
-
-      if (isEditing) {
-        const { error: updateError } = await supabase
-          .from("ads")
-          .update(payload)
-          .eq("id", ad.id);
-
-        if (updateError) {
-          setError("Error al actualizar: " + updateError.message);
-          setSaving(false);
-          return;
-        }
-      } else {
-        const { error: insertError } = await supabase
-          .from("ads")
-          .insert(payload);
-
-        if (insertError) {
-          setError("Error al crear: " + insertError.message);
-          setSaving(false);
-          return;
-        }
-      }
-
       router.push("/admin");
       router.refresh();
-    } catch (err) {
-      setError("Error inesperado: " + (err instanceof Error ? err.message : String(err)));
-      setSaving(false);
-    }
+    });
   };
 
   return (
@@ -410,10 +356,10 @@ export default function AdForm({ ad, clients }: AdFormProps) {
       <div className="flex gap-3 pt-2">
         <button
           type="submit"
-          disabled={saving}
+          disabled={pending}
           className="px-6 py-2.5 bg-ink text-white font-bold rounded hover:bg-ink/80 transition-colors disabled:opacity-50"
         >
-          {saving ? "Guardando..." : isEditing ? "Guardar Cambios" : "Crear Aviso"}
+          {pending ? "Guardando..." : isEditing ? "Guardar Cambios" : "Crear Aviso"}
         </button>
         <button
           type="button"
