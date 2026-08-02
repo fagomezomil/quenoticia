@@ -713,10 +713,11 @@ function PostCard({
               >
                 {isVideo ? (
                   <video
-                    src={`${url}#t=0.1`}
+                    src={url}
+                    poster={url.replace(/\.mp4$/, ".png")}
                     muted
                     playsInline
-                    preload="metadata"
+                    preload="none"
                     className="w-full h-full object-cover"
                   />
                 ) : (

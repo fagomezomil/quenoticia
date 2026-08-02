@@ -124,6 +124,25 @@ async function uploadStoryMp4(
   return data.publicUrl;
 }
 
+/** Sube el PNG poster del story (mismo nombre que el MP4 pero extensión .png).
+ *  Sirve como thumbnail estático en /admin/redes via <video poster={...}>. */
+async function uploadStoryPosterPng(
+  png: Buffer,
+  section: string,
+  n: number,
+  timestamp: number,
+): Promise<string> {
+  const admin = await getSupabaseAdmin();
+  const path = `social/stories-${timestamp}-${section}-${n}.png`;
+  const { error } = await admin.storage.from("media").upload(path, png, {
+    contentType: "image/png",
+    upsert: true,
+  });
+  if (error) throw new Error(`upload story poster ${path}: ${error.message}`);
+  const { data } = admin.storage.from("media").getPublicUrl(path);
+  return data.publicUrl;
+}
+
 /** Run async tasks with bounded concurrency (para no saturar CPU con 10 ffmpeg en paralelo). */
 async function mapWithConcurrency<T, R>(
   items: T[],
@@ -201,8 +220,10 @@ export async function buildStories(): Promise<StoriesResult> {
     n ? n.section : ("politica" as Section),
   );
 
-  // Generar stories 9:16 con audio: PNG → render MP4 15s (ffmpeg + MP3 trending) → upload MP4.
+  // Generar stories 9:16 con audio: PNG → render MP4 15s (ffmpeg + MP3 trending) → upload MP4 + poster PNG.
   // Concurrency limitada porque ffmpeg es CPU-intensivo (4 vCPU VPS).
+  // El PNG poster se sube con el mismo nombre que el MP4 (extensión .png) para que el
+  // dashboard lo use via <video poster={url.replace('.mp4', '.png')}>.
   const slideResults = await mapWithConcurrency(
     notes,
     MP4_RENDER_CONCURRENCY,
@@ -219,6 +240,7 @@ export async function buildStories(): Promise<StoriesResult> {
           sourceLabel: note.author ?? undefined,
         });
         const mp4 = await renderStoryMp4(png);
+        await uploadStoryPosterPng(png, note.section, i + 1, timestamp);
         return await uploadStoryMp4(mp4, note.section, i + 1, timestamp);
       } catch (err) {
         console.error(`buildStories: story falló para ${note.section} #${i + 1}:`, err);
