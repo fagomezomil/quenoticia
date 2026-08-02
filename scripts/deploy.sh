@@ -25,8 +25,13 @@ echo "=== build (output standalone) ==="
 npm run build
 
 echo "=== copy static + public + assets/fonts to standalone ==="
-cp -r .next/static .next/standalone/.next/
-cp -r public .next/standalone/
+# Usar /. para merguear contenido (no crear subdirs anidados si el destino ya existe).
+# .next/static → .next/standalone/.next/static
+mkdir -p .next/standalone/.next/static
+cp -r .next/static/. .next/standalone/.next/static/
+# public → .next/standalone/public
+mkdir -p .next/standalone/public
+cp -r public/. .next/standalone/public/
 # Las fonts .woff usadas por src/lib/social/fonts.ts no se trazan automáticamente
 # en el standalone build — hay que copiarlas a mano para que generateSlidePng las encuentre.
 mkdir -p .next/standalone/src/assets/fonts
