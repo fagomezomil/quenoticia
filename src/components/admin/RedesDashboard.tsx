@@ -701,17 +701,32 @@ function PostCard({
       {/* Thumbnails */}
       {post.slide_image_urls.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-2 mb-2">
-          {post.slide_image_urls.map((url, i) => (
-            <a
-              key={i}
-              href={url}
-              target="_blank"
-              rel="noreferrer"
-              className="flex-shrink-0 w-16 h-20 border border-border overflow-hidden rounded bg-cream"
-            >
-              <img src={url} alt={`Slide ${i + 1}`} className="w-full h-full object-cover" />
-            </a>
-          ))}
+          {post.slide_image_urls.map((url, i) => {
+            const isVideo = url.endsWith(".mp4");
+            return (
+              <a
+                key={i}
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-shrink-0 w-16 h-20 border border-border overflow-hidden rounded bg-cream"
+              >
+                {isVideo ? (
+                  <video
+                    src={url}
+                    muted
+                    loop
+                    autoPlay
+                    playsInline
+                    preload="metadata"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <img src={url} alt={`Slide ${i + 1}`} className="w-full h-full object-cover" />
+                )}
+              </a>
+            );
+          })}
         </div>
       )}
 
