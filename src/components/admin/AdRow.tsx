@@ -69,6 +69,27 @@ export default function AdRow({ ad }: AdRowProps) {
         {TYPE_LABELS[ad.type] || ad.type}
       </span>
 
+      {/* Link URL */}
+      {ad.link_url && (
+        <a
+          href={ad.link_url}
+          target="_blank"
+          rel="noreferrer"
+          className="hidden xl:flex items-center gap-1 text-[11px] text-[var(--color-brand)] hover:underline min-w-0 max-w-[180px]"
+          title={ad.link_url}
+        >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          <span className="truncate">{ad.link_url}</span>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <path d="M7 17L17 7" />
+            <path d="M7 7h10v10" />
+          </svg>
+        </a>
+      )}
+
       {/* Vigencia */}
       <div className="hidden lg:block text-[11px] text-muted whitespace-nowrap min-w-[140px]">
         {formatDate(ad.starts_at)} → {formatDate(ad.expires_at)}
