@@ -713,10 +713,8 @@ function PostCard({
               >
                 {isVideo ? (
                   <video
-                    src={url}
+                    src={`${url}#t=0.1`}
                     muted
-                    loop
-                    autoPlay
                     playsInline
                     preload="metadata"
                     className="w-full h-full object-cover"
