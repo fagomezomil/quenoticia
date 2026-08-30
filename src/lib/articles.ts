@@ -25,6 +25,13 @@ function mapRowToArticle(row: Record<string, unknown>): CustomArticle {
     comments_enabled: (row.comments_enabled as boolean) ?? true,
     volanta: (row.volanta as string) || undefined,
     columnistId: (row.columnist_id as string) || undefined,
+    source: (row.source as string) || null,
+    originalBody: (row.original_body as string) || null,
+    originalTitle: (row.original_title as string) || null,
+    enhancedAt: (row.enhanced_at as string) || null,
+    enhancerVersion: (row.enhancer_version as string) || null,
+    manualReviewRequired: (row.manual_review_required as boolean) ?? false,
+    manuallyEdited: (row.manually_edited as boolean) ?? false,
   };
 }
 

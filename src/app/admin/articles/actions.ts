@@ -82,6 +82,17 @@ export async function updateArticle(payload: UpdateArticlePayload) {
   const { id, ...raw } = payload;
   const data = pickAllowedFields(raw);
 
+  // Si la nota fue enhanced por el agente LLM y el editor la modifica manualmente,
+  // marcamos manually_edited=true para que el agente no la re-procese en el futuro.
+  const { data: existing } = await supabase
+    .from("articles")
+    .select("enhanced_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (existing?.enhanced_at) {
+    (data as Record<string, unknown>).manually_edited = true;
+  }
+
   const { error } = await supabase
     .from("articles")
     .update(data)
@@ -101,6 +112,99 @@ export async function updateArticle(payload: UpdateArticlePayload) {
   void notifyArticleChange(payload.section, id);
   // Google Indexing API: notificar push a Google Web Search
   void notifyArticleChangeGoogle(payload.section, id);
+
+  return { error: null };
+}
+
+/** Aprueba una nota enhanced por el agente LLM: la publica (active=true) y
+ *  quita el flag manual_review_required. Revalida + notifica IndexNow/Google. */
+export async function approveEnhancedArticle(id: string, section: string) {
+  try {
+    await requireEditorAction();
+  } catch {
+    return { error: "No autorizado" };
+  }
+
+  if (!ALLOWED_SECTIONS.includes(section)) {
+    return { error: "Sección no válida" };
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("articles")
+    .update({
+      active: true,
+      manual_review_required: false,
+    })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/admin/revision");
+  revalidatePath("/admin/articles");
+  revalidatePath("/");
+  revalidatePath(`/${section}`);
+  revalidatePath(`/${section}/${id}`);
+
+  void notifyArticleChange(section, id);
+  void notifyArticleChangeGoogle(section, id);
+
+  return { error: null };
+}
+
+/** Rechaza el enhancement: revierte body/title al original, limpia campos del
+ *  agente y deja la nota como draft (active=false). Fede decide después qué hacer. */
+export async function rejectEnhancedArticle(id: string) {
+  try {
+    await requireEditorAction();
+  } catch {
+    return { error: "No autorizado" };
+  }
+
+  const supabase = await createClient();
+
+  // Traer original_body y original_title para revertir.
+  const { data: art, error: fetchErr } = await supabase
+    .from("articles")
+    .select("original_body, original_title, section")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchErr || !art) {
+    return { error: fetchErr?.message ?? "Nota no encontrada" };
+  }
+
+  const { error } = await supabase
+    .from("articles")
+    .update({
+      title: art.original_title,
+      body: art.original_body,
+      volanta: null,
+      excerpt: null,
+      original_body: null,
+      original_title: null,
+      enhanced_at: null,
+      enhancer_version: null,
+      manual_review_required: false,
+      manually_edited: true,
+      active: false,
+    })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/admin/revision");
+  revalidatePath("/admin/articles");
+  revalidatePath("/");
+  if (art.section) {
+    revalidatePath(`/${art.section}`);
+    revalidatePath(`/${art.section}/${id}`);
+  }
 
   return { error: null };
 }
