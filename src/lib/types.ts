@@ -114,6 +114,32 @@ export interface CustomArticle extends Article {
   updated_at: string;
   comments_enabled: boolean;
   layout: ArticleLayout;
+  // Campos del agente editorial (migración 034).
+  source?: string | null;
+  originalBody?: string | null;
+  originalTitle?: string | null;
+  enhancedAt?: string | null;
+  enhancerVersion?: string | null;
+  manualReviewRequired?: boolean;
+  manuallyEdited?: boolean;
+}
+
+/** Artículo en estado de revisión por el agente editorial LLM. */
+export interface RevisionArticle {
+  id: string;
+  title: string;
+  originalTitle: string | null;
+  body: string | null;
+  originalBody: string | null;
+  volanta: string | null;
+  excerpt: string | null;
+  section: Section;
+  imageUrl: string | null;
+  imageAlt: string;
+  originalUrl: string | null;
+  enhancedAt: string | null;
+  enhancerVersion: string | null;
+  manualReviewRequired: boolean;
 }
 
 export interface SponsoredContent {
