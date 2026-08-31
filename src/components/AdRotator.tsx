@@ -22,7 +22,7 @@ const sizeStyles: Record<string, string> = {
   sticky_footer: "w-full aspect-[8/1]",
 };
 
-const DEFAULT_DURATION = 15;
+const DEFAULT_DURATION = 8;
 const FADE_MS = 300;
 
 function Placeholder({ className, label }: { className: string; label: string }) {
