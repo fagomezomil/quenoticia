@@ -22,7 +22,6 @@ import type {
   SourceBreakdown,
   StatsTotals,
 } from "@/lib/stats";
-import ScraperTriggerPanel from "./ScraperTriggerPanel";
 
 const BRAND = "#f97316";
 const INK = "#0a0a0a";
@@ -394,9 +393,6 @@ export default function StatsDashboard({
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
-
-      {/* Scraper on-demand — trigger por fuente + consola en vivo */}
-      <ScraperTriggerPanel />
     </div>
   );
 }
