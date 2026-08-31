@@ -1,13 +1,12 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { selectNotesForCarousel, selectNotesForStories, type SelectedNote } from "./select-notes";
 import { generateSlidePng, generateStoryPng } from "./generate-slide";
-import { renderStoryMp4 } from "./render-story-mp4";
 import { buildCaption } from "./caption-builder";
 import type { Section } from "@/lib/types";
 
-// Concurrency de renders MP4 — ffmpeg es CPU-intensivo. VPS tiene 4 vCPU,
-// 10 renders en paralelo saturan. Limitamos a 3 para no matar la app.
-const MP4_RENDER_CONCURRENCY = 3;
+// Concurrency de generación de PNGs — satori/resvg son CPU-intensivos. VPS 4 vCPU,
+// 10 PNGs en paralelo saturan. Limitamos a 3 para no matar la app.
+const PNG_GEN_CONCURRENCY = 3;
 
 export interface CarouselResult {
   notes: (SelectedNote | null)[];
@@ -105,27 +104,8 @@ async function uploadSlidePng(png: Buffer, section: string, timestamp: number): 
   return data.publicUrl;
 }
 
-/** Sube un MP4 9:16 15s al bucket `media` con path `social/stories-{timestamp}-{section}-{n}.mp4`
- *  y devuelve la URL pública. */
-async function uploadStoryMp4(
-  mp4: Buffer,
-  section: string,
-  n: number,
-  timestamp: number,
-): Promise<string> {
-  const admin = await getSupabaseAdmin();
-  const path = `social/stories-${timestamp}-${section}-${n}.mp4`;
-  const { error } = await admin.storage.from("media").upload(path, mp4, {
-    contentType: "video/mp4",
-    upsert: true,
-  });
-  if (error) throw new Error(`upload story mp4 ${path}: ${error.message}`);
-  const { data } = admin.storage.from("media").getPublicUrl(path);
-  return data.publicUrl;
-}
-
-/** Sube el PNG poster del story (mismo nombre que el MP4 pero extensión .png).
- *  Sirve como thumbnail estático en /admin/redes via <video poster={...}>. */
+/** Sube el PNG del story 9:16 al bucket `media` con path `social/stories-{timestamp}-{section}-{n}.png`
+ *  y devuelve la URL pública. Se publica directo como imagen de story IG/FB (sin MP4). */
 async function uploadStoryPosterPng(
   png: Buffer,
   section: string,
@@ -220,13 +200,12 @@ export async function buildStories(): Promise<StoriesResult> {
     n ? n.section : ("politica" as Section),
   );
 
-  // Generar stories 9:16 con audio: PNG → render MP4 15s (ffmpeg + MP3 trending) → upload MP4 + poster PNG.
-  // Concurrency limitada porque ffmpeg es CPU-intensivo (4 vCPU VPS).
-  // El PNG poster se sube con el mismo nombre que el MP4 (extensión .png) para que el
-  // dashboard lo use via <video poster={url.replace('.mp4', '.png')}>.
+  // Generar stories 9:16 como PNG directo (sin MP4/ffmpeg).
+  // Fede 2026-08-31: sacamos el MP4 (antes con MP3, luego sin audio) para reducir
+  // CPU (ffmpeg), storage y egress. IG/FB aceptan PNG como asset de story.
   const slideResults = await mapWithConcurrency(
     notes,
-    MP4_RENDER_CONCURRENCY,
+    PNG_GEN_CONCURRENCY,
     async (note, i): Promise<string | null> => {
       if (!note || !note.title) return null;
       try {
@@ -239,9 +218,7 @@ export async function buildStories(): Promise<StoriesResult> {
           dateLabel: formatDateLabel(note.created_at),
           sourceLabel: note.author ?? undefined,
         });
-        const mp4 = await renderStoryMp4(png);
-        await uploadStoryPosterPng(png, note.section, i + 1, timestamp);
-        return await uploadStoryMp4(mp4, note.section, i + 1, timestamp);
+        return await uploadStoryPosterPng(png, note.section, i + 1, timestamp);
       } catch (err) {
         console.error(`buildStories: story falló para ${note.section} #${i + 1}:`, err);
         return null;
