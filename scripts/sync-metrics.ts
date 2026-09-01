@@ -27,8 +27,21 @@ import { getPostMetrics } from "@/lib/social/buffer-client";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 const dryRun = process.argv.includes("--dry-run");
-const DAYS_BACK = 30;
-const INTER_POST_DELAY_MS = 150; // rate limiting suave contra Buffer API
+
+// Default 7 días — Buffer API tiene rate limiting agresivo en Free plan.
+// Backfill manual con --days 30 para poblar histórico la primera vez.
+function parseDaysBack(): number {
+  const idx = process.argv.indexOf("--days");
+  if (idx !== -1 && process.argv[idx + 1]) {
+    const n = Number(process.argv[idx + 1]);
+    if (Number.isFinite(n) && n > 0) return Math.min(n, 90);
+  }
+  return 7;
+}
+const DAYS_BACK = parseDaysBack();
+const INTER_POST_DELAY_MS = 800; // 0.8s entre posts — Buffer rate limit safe
+const MAX_RETRIES = 3;
+const RETRY_BASE_MS = 1500; // 1.5s, 3s, 6s
 
 function log(obj: Record<string, unknown>): void {
   console.log(JSON.stringify({ ...obj, timestamp: new Date().toISOString() }));
@@ -107,8 +120,20 @@ async function main(): Promise<number> {
     let totalMetrics = 0;
 
     for (const postId of syncIds) {
-      const metrics = await getPostMetrics(bufferKey, postId);
+      // Retry con backoff exponencial para rate limiting de Buffer API
+      let metrics = null;
+      let lastErr = "";
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        metrics = await getPostMetrics(bufferKey, postId);
+        if (metrics && metrics.metrics && metrics.metrics.length > 0) break;
+        if (attempt < MAX_RETRIES - 1) {
+          const delay = RETRY_BASE_MS * Math.pow(2, attempt);
+          await sleep(delay);
+        }
+        lastErr = metrics === null ? "getPostMetrics returned null" : "empty metrics";
+      }
       if (!metrics || !metrics.metrics || metrics.metrics.length === 0) {
+        console.error(`getPostMetrics ${postId}: ${lastErr} after ${MAX_RETRIES} retries`);
         failed++;
         await sleep(INTER_POST_DELAY_MS);
         continue;
