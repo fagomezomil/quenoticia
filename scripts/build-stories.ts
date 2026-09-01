@@ -5,9 +5,13 @@
  * su propio cgroup (systemd oneshot service) para no estresar el proceso web
  * Next.js con el render Satori+Resvg+sharp (~2GB working set).
  *
- * Uso:
- *   node node_modules/.bin/tsx scripts/build-stories.ts
- *   node node_modules/.bin/tsx scripts/build-stories.ts --dry-run
+ * Uso (VPS):
+ *   node --import ./scripts/polyfill-ws.cjs node_modules/.bin/tsx scripts/build-stories.ts
+ *   node --import ./scripts/polyfill-ws.cjs node_modules/.bin/tsx scripts/build-stories.ts --dry-run
+ *
+ * El polyfill-ws.cjs se carga via --import antes de tsx, seteando globalThis.WebSocket
+ * para que supabase-js (que lo requiere en el constructor del RealtimeClient) no
+ * rompa en Node 20 sin native WebSocket.
  *
  * Env vars requeridas (cargadas por el wrapper bash del systemd service):
  *   NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
@@ -17,18 +21,10 @@
  * Log a stdout/stderr → /var/log/quenoticia/stories.log (via systemd StandardOutput).
  */
 
+import { buildStories } from "@/lib/social/carousel-builder";
+import { bufferPublishStories } from "@/lib/social/buffer-client";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type { ChannelTarget } from "@/lib/social/daily-limits";
-
-// Polyfill WebSocket ANTES de cualquier value-import que toque supabase-js.
-// Node 20 no tiene native WebSocket; supabase-js lo requiere en el constructor
-// del RealtimeClient aunque no se use realtime. Next.js polyfill nativo en el
-// endpoint HTTP, pero scripts standalone necesitan este polyfill manual.
-const { WebSocket } = await import("ws");
-(globalThis as unknown as { WebSocket: typeof WebSocket }).WebSocket = WebSocket;
-
-const { buildStories } = await import("@/lib/social/carousel-builder");
-const { bufferPublishStories } = await import("@/lib/social/buffer-client");
-const { getSupabaseAdmin } = await import("@/lib/supabase/admin");
 
 const dryRun = process.argv.includes("--dry-run");
 
