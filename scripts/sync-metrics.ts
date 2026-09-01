@@ -159,12 +159,13 @@ async function main(): Promise<number> {
       const todayDate = now.toISOString().slice(0, 10); // YYYY-MM-DD para snapshot_date
 
       // Upsert por (post_id, metric_name, snapshot_date) — actualiza si ya existe
+      // engagementRate: Buffer lo devuelve como porcentaje (0-100). Normalizar a 0-1.
       const rows = metrics.metrics.map((m) => ({
         post_id: postId,
         channel_id: meta.channelId,
         service: meta.service,
         metric_name: m.type,
-        value: m.value,
+        value: m.type === "engagementRate" ? m.value / 100 : m.value,
         snapshot_at: today,
         snapshot_date: todayDate,
       }));
