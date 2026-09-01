@@ -6,12 +6,15 @@
  * Next.js con el render Satori+Resvg+sharp (~2GB working set).
  *
  * Uso (VPS):
- *   node --import ./scripts/polyfill-ws.cjs node_modules/.bin/tsx scripts/build-stories.ts
- *   node --import ./scripts/polyfill-ws.cjs node_modules/.bin/tsx scripts/build-stories.ts --dry-run
+ *   NODE_OPTIONS="--import ./scripts/polyfill-ws.cjs" node_modules/.bin/tsx scripts/build-stories.ts
+ *   NODE_OPTIONS="--import ./scripts/polyfill-ws.cjs" node_modules/.bin/tsx scripts/build-stories.ts --dry-run
  *
  * El polyfill-ws.cjs se carga via --import antes de tsx, seteando globalThis.WebSocket
  * para que supabase-js (que lo requiere en el constructor del RealtimeClient) no
  * rompa en Node 20 sin native WebSocket.
+ *
+ * IMPORTANTE: el `--import` inline NO funciona con tsx (su binario spawnea un child
+ * process que no hereda flags inline). Pasarlo via NODE_OPTIONS env var sí llega.
  *
  * Env vars requeridas (cargadas por el wrapper bash del systemd service):
  *   NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,

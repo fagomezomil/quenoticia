@@ -7,11 +7,13 @@
  * polyfill manual via --import.
  *
  * Uso:
- *   node --import ./scripts/polyfill-ws.cjs node_modules/.bin/tsx scripts/build-stories.ts
+ *   NODE_OPTIONS="--import ./scripts/polyfill-ws.cjs" node_modules/.bin/tsx scripts/build-stories.ts
  *
- * --import ejecuta este archivo ANTES de que tsx empiece a compilar/ejecutar
- * el script. Para cuando supabase-js corra su constructor, globalThis.WebSocket
- * ya está seteado.
+ * NOTA: el `--import` inline NO funciona con tsx porque su binario spawnea un
+ * child process que no hereda flags inline. Pasarlo via NODE_OPTIONS (env var)
+ * sí llega al child process. --import ejecuta este archivo ANTES de que tsx
+ * empiece a compilar/ejecutar el script. Para cuando supabase-js corra su
+ * constructor, globalThis.WebSocket ya está seteado.
  */
 
 const { WebSocket } = require("ws");
