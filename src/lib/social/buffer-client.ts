@@ -58,6 +58,82 @@ export async function listOrganizations(accessToken: string): Promise<
   return data.account.organizations;
 }
 
+/** Métrica individual de un post (reach, impressions, reactions, etc). */
+export interface BufferPostMetric {
+  type: string;
+  name: string;
+  value: number;
+  unit: string;
+}
+
+/** Resultado de getPostMetrics para un update_id de Buffer. */
+export interface BufferPostMetrics {
+  id: string;
+  metrics: BufferPostMetric[];
+  metricsUpdatedAt: string | null;
+}
+
+/** Trae métricas de un post específico por su update_id de Buffer.
+ *  Buffer GraphQL API: query `post(input: { id })`.
+ *  Refresca metrics ~24h lag. Devuelve array de { type, name, value, unit }. */
+export async function getPostMetrics(
+  accessToken: string,
+  postId: string,
+): Promise<BufferPostMetrics | null> {
+  const query = `query GetPost($input: PostInput!) {
+    post(input: $input) {
+      id
+      metrics { type name value unit }
+      metricsUpdatedAt
+    }
+  }`;
+  try {
+    const data = await gql<{ post: { id: string; metrics: BufferPostMetric[]; metricsUpdatedAt: string | null } | null }>(
+      accessToken,
+      query,
+      { input: { id: postId } },
+    );
+    return data.post;
+  } catch (err) {
+    console.error(`getPostMetrics ${postId}:`, err);
+    return null;
+  }
+}
+
+/** Métricas agregadas por canal y rango de fechas (máx 365 días).
+ *  Buffer GraphQL API: query `aggregatedPostMetrics(input: {...})`.
+ *  Útil para dashboard por canal: reach/impressions totales del período. */
+export async function getAggregatedMetrics(
+  accessToken: string,
+  organizationId: string,
+  startDateTime: string,
+  endDateTime: string,
+  channelIds?: string[],
+): Promise<BufferPostMetric[] | null> {
+  const input: Record<string, unknown> = {
+    organizationId,
+    startDateTime,
+    endDateTime,
+  };
+  if (channelIds && channelIds.length > 0) input.channelIds = channelIds;
+
+  const query = `query AggregatePostMetrics($input: AggregatedPostMetricsInput!) {
+    aggregatedPostMetrics(input: $input) {
+      metrics { type value unit }
+      metricsUpdatedAt
+    }
+  }`;
+  try {
+    const data = await gql<{
+      aggregatedPostMetrics: { metrics: BufferPostMetric[]; metricsUpdatedAt: string | null } | null;
+    }>(accessToken, query, { input });
+    return data.aggregatedPostMetrics?.metrics ?? null;
+  } catch (err) {
+    console.error(`getAggregatedMetrics:`, err);
+    return null;
+  }
+}
+
 /** Lista los channels (cuentas sociales conectadas) de todas las organizaciones. */
 export async function listChannels(accessToken: string): Promise<BufferChannel[]> {
   const orgs = await listOrganizations(accessToken);

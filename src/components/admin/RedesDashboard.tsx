@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { sectionConfig } from "@/lib/types";
 import {
   retrySocialPost,
@@ -234,14 +235,22 @@ export default function RedesDashboard({ posts, articles, events, channels, conf
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold font-[family-name:var(--font-heading)] text-ink">
-          Redes — Publicación automática
-        </h1>
-        <p className="text-sm text-muted mt-1">
-          Carrusel al feed (5 slides cuadrados, 1 por sección) a las 09:00 y 20:30 + Stories
-          IG/FB (10 slides 9:16, 2 por sección) a las 15:00 y 21:00, vía Buffer.
-        </p>
+      <header className="mb-6 flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold font-[family-name:var(--font-heading)] text-ink">
+            Redes — Publicación automática
+          </h1>
+          <p className="text-sm text-muted mt-1">
+            Carrusel al feed (5 slides cuadrados, 1 por sección) a las 09:00 y 20:30 + Stories
+            IG/FB (10 slides 9:16, 2 por sección) a las 15:00 y 21:00, vía Buffer.
+          </p>
+        </div>
+        <Link
+          href="/admin/redes/metrics"
+          className="px-3 py-1.5 text-xs font-bold rounded border-2 border-ink/20 hover:border-ink bg-white text-ink transition shadow-hard-sm"
+        >
+          Ver métricas →
+        </Link>
       </header>
 
       {/* Config status */}
