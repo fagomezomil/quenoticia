@@ -49,8 +49,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**.lagaceta.com.ar" },
     ],
   },
-  // @resvg/resvg-js y sharp usan bindings nativos — deben quedar fuera del bundler.
-  serverExternalPackages: ["@resvg/resvg-js", "sharp"],
+  // @resvg/resvg-js, sharp y takumi usan bindings/binarios nativos — deben quedar fuera del bundler.
+  // takumi-js via @takumi-rs/core importa un .node binary que Turbopack no puede empaquetar.
+  serverExternalPackages: ["@resvg/resvg-js", "sharp", "takumi-js", "@takumi-rs/core"],
   async headers() {
     return [
       // Article pages: limited snippets to reduce scraping value
