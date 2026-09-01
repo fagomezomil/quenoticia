@@ -17,10 +17,18 @@
  * Log a stdout/stderr → /var/log/quenoticia/stories.log (via systemd StandardOutput).
  */
 
-import { buildStories } from "@/lib/social/carousel-builder";
-import { bufferPublishStories } from "@/lib/social/buffer-client";
-import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type { ChannelTarget } from "@/lib/social/daily-limits";
+
+// Polyfill WebSocket ANTES de cualquier value-import que toque supabase-js.
+// Node 20 no tiene native WebSocket; supabase-js lo requiere en el constructor
+// del RealtimeClient aunque no se use realtime. Next.js polyfill nativo en el
+// endpoint HTTP, pero scripts standalone necesitan este polyfill manual.
+const { WebSocket } = await import("ws");
+(globalThis as unknown as { WebSocket: typeof WebSocket }).WebSocket = WebSocket;
+
+const { buildStories } = await import("@/lib/social/carousel-builder");
+const { bufferPublishStories } = await import("@/lib/social/buffer-client");
+const { getSupabaseAdmin } = await import("@/lib/supabase/admin");
 
 const dryRun = process.argv.includes("--dry-run");
 
