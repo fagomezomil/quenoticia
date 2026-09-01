@@ -28,20 +28,20 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 const dryRun = process.argv.includes("--dry-run");
 
-// Default 7 días — Buffer API tiene rate limiting agresivo en Free plan.
-// Backfill manual con --days 30 para poblar histórico la primera vez.
+// Default 2 días — Buffer Free plan rate limita agresivo.
+// Sync incremental: cada día solo trae posts nuevos. Backfill manual con --days 30.
 function parseDaysBack(): number {
   const idx = process.argv.indexOf("--days");
   if (idx !== -1 && process.argv[idx + 1]) {
     const n = Number(process.argv[idx + 1]);
     if (Number.isFinite(n) && n > 0) return Math.min(n, 90);
   }
-  return 7;
+  return 2;
 }
 const DAYS_BACK = parseDaysBack();
-const INTER_POST_DELAY_MS = 800; // 0.8s entre posts — Buffer rate limit safe
-const MAX_RETRIES = 3;
-const RETRY_BASE_MS = 1500; // 1.5s, 3s, 6s
+const INTER_POST_DELAY_MS = 1200; // 1.2s entre posts — Buffer rate limit safe
+const MAX_RETRIES = 2;
+const RETRY_BASE_MS = 3000; // 3s, 6s
 
 function log(obj: Record<string, unknown>): void {
   console.log(JSON.stringify({ ...obj, timestamp: new Date().toISOString() }));
@@ -112,8 +112,22 @@ async function main(): Promise<number> {
       for (const id of ids) postIds.add(id);
     }
     // Filtrar solo los que tenemos mapeo de canal
-    const syncIds = Array.from(postIds).filter((id) => postToChannel.has(id));
-    log({ uniquePostIds: postIds.size, withChannelMapping: syncIds.length });
+    const candidateIds = Array.from(postIds).filter((id) => postToChannel.has(id));
+
+    // Sync incremental: skipear postIds que ya tienen snapshot de hoy.
+    // El cron corre 1x/día, si ya se sincronizó hoy no lo reintentamos.
+    const todayDate = new Date().toISOString().slice(0, 10);
+    let syncIds = candidateIds;
+    if (!dryRun) {
+      const { data: alreadySynced } = await admin
+        .from("social_metrics")
+        .select("post_id")
+        .eq("snapshot_date", todayDate)
+        .in("post_id", candidateIds);
+      const syncedSet = new Set((alreadySynced ?? []).map((r) => r.post_id as string));
+      syncIds = candidateIds.filter((id) => !syncedSet.has(id));
+    }
+    log({ uniquePostIds: postIds.size, withChannelMapping: candidateIds.length, alreadySyncedToday: candidateIds.length - syncIds.length, toSync: syncIds.length });
 
     let synced = 0;
     let failed = 0;
