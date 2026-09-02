@@ -1,14 +1,16 @@
-// Moderación de comentarios con Groq + groq/compound + system prompt.
+// Moderación de comentarios con Groq + openai/gpt-oss-120b + system prompt.
 // Groq deprecated LlamaGuard-3-8B y gpt-oss-safeguard-20b no sirve como clasificador,
 // así que usamos un LLM general con un prompt estructurado que devuelve "safe"
 // o "unsafe\nS1,S5,S10" siguiendo las categorías de Llama Guard 3.
 // 2026-08-30: llama-3.3-70b-versatile retirado de Groq, migrado a groq/compound.
+// 2026-09-02: groq/compound descartado — 413 Payload Too Large inconsistente (compound
+// router devuelve 413 cuando sub-modelos están bajo load en horarios peak). Migrado a
+// openai/gpt-oss-120b (non-compound, sin routing, sin 413s).
 //
 // Groq es gratis (sin tarjeta) — te dan API key en https://console.groq.com.
-// Latencia ~300-600ms con groq/compound.
 
 const GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "groq/compound";
+const MODEL = "openai/gpt-oss-120b";
 
 export interface ModerationResult {
   score: number; // 0-1, derivado del peso de la categoría más grave
