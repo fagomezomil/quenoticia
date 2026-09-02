@@ -105,6 +105,8 @@ export interface Article {
   layout?: ArticleLayout;
   volanta?: string;
   columnistId?: string;
+  sortDate?: string;
+  enhancedAt?: string | null;
 }
 
 export interface CustomArticle extends Article {
@@ -206,3 +208,16 @@ export const sectionConfig: Record<Section, SectionConfig> = {
   tucuman: { label: "Tucumán", color: "#f59e0b", path: "/tucuman" },
   opinion: { label: "Opinión", color: "#0d9488", path: "/opinion" },
 };
+
+/** Renombres de fuentes para display en cards y artículos.
+ *  Claves son el valor exacto del campo `author` en Supabase. */
+export const SOURCE_RENAMES: Record<string, string> = {
+  "Comunicación Pública Gobierno de Tucumán": "Comunicación Tuc",
+  "Asociación del Fútbol Argentino": "AFA",
+};
+
+/** Devuelve el nombre display de una fuente, aplicando renames si existen. */
+export function displaySource(author: string | undefined): string | undefined {
+  if (!author) return undefined;
+  return SOURCE_RENAMES[author] ?? author;
+}

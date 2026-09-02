@@ -8,6 +8,7 @@ import ArticleCard from "@/components/ArticleCard";
 import AdRotator from "@/components/AdRotator";
 import SponsoredRotator from "@/components/SponsoredRotator";
 import { Article, Ad, Section, sectionConfig } from "@/lib/types";
+import { cardByline } from "@/lib/format";
 
 interface SectionPageLayoutProps {
   section: Section;
@@ -50,11 +51,14 @@ export default function SectionPageLayout({
   const gridArticles = sorted.filter((a) => a.layout !== "urgente");
 
   // Page 1 keeps the editorial layout (featured + sidebar + grid).
-  // Featured+sidebar consumen 5 items, grid muestra `perPage` items más.
-  // Page 2+ muestra `perPage` items planos. Todas las páginas terminan con
-  // grid de `perPage` items → 8 articles + 1 sponsored + 3 (chunk 2) = sin huecos.
+  // Featured+sidebar consumen 5 items, grid muestra `gridPerPage` items más.
+  // Page 2+ muestra `gridPerPage` items planos.
+  // Con sponsored: 8 articles + 1 SponsoredRotator + 3 = 12 slots (3×4 lleno).
+  // Sin sponsored: 9 articles + 3 = 12 slots (3×4 lleno, sin huecos).
   const PAGE1_OFFSET = 5; // featured(1) + sidebar(4)
-  const totalPages = Math.max(1, Math.ceil((gridArticles.length - PAGE1_OFFSET) / perPage) + 1);
+  const hasSponsored = sponsoredItems.length > 0;
+  const gridPerPage = hasSponsored ? perPage : perPage + 1;
+  const totalPages = Math.max(1, Math.ceil((gridArticles.length - PAGE1_OFFSET) / gridPerPage) + 1);
   const currentPage = Math.min(Math.max(1, page), totalPages);
   const isFirstPage = currentPage === 1;
 
@@ -65,10 +69,10 @@ export default function SectionPageLayout({
   if (isFirstPage) {
     featured = gridArticles[0];
     sidebarItems = gridArticles.slice(1, PAGE1_OFFSET);
-    gridItems = gridArticles.slice(PAGE1_OFFSET, PAGE1_OFFSET + perPage);
+    gridItems = gridArticles.slice(PAGE1_OFFSET, PAGE1_OFFSET + gridPerPage);
   } else {
-    const start = PAGE1_OFFSET + (currentPage - 2) * perPage;
-    gridItems = gridArticles.slice(start, start + perPage);
+    const start = PAGE1_OFFSET + (currentPage - 2) * gridPerPage;
+    gridItems = gridArticles.slice(start, start + gridPerPage);
   }
 
   return (
@@ -113,11 +117,11 @@ export default function SectionPageLayout({
         {isFirstPage && featured && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Featured story — 2/3 width, comic panel hero */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 flex">
               <Link
                 href={sponsoredIds.has(featured.id) ? `/patrocinado/${featured.id}` : `/${featured.section}/${featured.id}`}
                 prefetch={false}
-                className="group relative overflow-hidden bg-ink min-h-[260px] md:min-h-[440px] block border-ink-3 shadow-hard"
+                className="group relative overflow-hidden bg-ink min-h-[260px] md:min-h-[440px] lg:h-full block border-ink-3 shadow-hard w-full"
               >
                 {featured.imageUrl ? (
                   <Image
@@ -162,19 +166,28 @@ export default function SectionPageLayout({
                       {featured.excerpt}
                     </p>
                   )}
-                  {((featured.author ?? featured.publisher) || featured.date) && (
-                    <p className="mt-3 text-xs text-white/60 tracking-wide uppercase font-[family-name:var(--font-heading)]">
-                      {(featured.author ?? featured.publisher) && <span>{featured.author ?? featured.publisher}</span>}
-                      {(featured.author ?? featured.publisher) && featured.date && <span> · </span>}
-                      {featured.date && <span>{featured.date}</span>}
-                    </p>
-                  )}
+                  {(() => {
+                    const { dateLine, source } = cardByline(featured);
+                    if (!dateLine && !source) return null;
+                    return (
+                      <div className="mt-3 font-[family-name:var(--font-heading)]">
+                        {dateLine && (
+                          <p className="text-xs text-white/60 tracking-wide uppercase" suppressHydrationWarning>
+                            {dateLine}
+                          </p>
+                        )}
+                        {source && (
+                          <p className="text-xs text-white/50 truncate">{source}</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </Link>
             </div>
 
-            {/* Sidebar stack — 1/3 width */}
-            <div className="flex flex-col gap-5">
+            {/* Sidebar stack — 1/3 width — se reparte el alto de la featured */}
+            <div className="flex flex-col gap-5 h-full">
               {sidebarItems.map((a) => {
                 const aCfg = sectionConfig[a.section];
                 const isSponsored = sponsoredIds.has(a.id);
@@ -184,7 +197,7 @@ export default function SectionPageLayout({
                     key={a.id}
                     href={href}
                     prefetch={false}
-                    className="group flex gap-3 py-3 border-b-2 border-ink last:border-0 hover:bg-brand/10 transition-colors -mx-1 px-1"
+                    className="group flex gap-3 py-3 border-b-2 border-ink last:border-0 hover:bg-brand/10 transition-colors -mx-1 px-1 flex-1 min-h-0 items-center"
                   >
                     {a.imageUrl ? (
                       <div className="relative w-24 h-20 shrink-0 overflow-hidden border-2 border-ink">
@@ -219,13 +232,22 @@ export default function SectionPageLayout({
                       <h3 className="display text-[15px] leading-snug line-clamp-2 mt-0.5 group-hover:text-brand transition-colors">
                         {a.title}
                       </h3>
-                      {((a.author ?? a.publisher) || a.date) && (
-                        <p className="text-xs text-muted mt-1 uppercase tracking-wide font-[family-name:var(--font-heading)]">
-                          {(a.author ?? a.publisher) && <span>{a.author ?? a.publisher}</span>}
-                          {(a.author ?? a.publisher) && a.date && <span> · </span>}
-                          {a.date && <span>{a.date}</span>}
-                        </p>
-                      )}
+                      {(() => {
+                        const { dateLine, source } = cardByline(a);
+                        if (!dateLine && !source) return null;
+                        return (
+                          <div className="mt-1 font-[family-name:var(--font-heading)]">
+                            {dateLine && (
+                              <p className="text-xs text-muted uppercase tracking-wide" suppressHydrationWarning>
+                                {dateLine}
+                              </p>
+                            )}
+                            {source && (
+                              <p className="text-xs text-foreground/70 truncate">{source}</p>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </Link>
                 );
@@ -284,10 +306,10 @@ export default function SectionPageLayout({
   );
 }
 
-/** Render the "Más en {sección}" grid splitting items into chunks of 8 articles,
- *  followed by 1 SponsoredRotator (card que rota todos los patrocinados cada 15s).
- *  8 + 1 = 9 = 3×3 → sin huecos en el grid de 3 cols. Después viene una fila de
- *  3 rectangle ads. Sólo entre chunks (no al final del último). */
+/** Render the "Más en {sección}" grid splitting items into chunks.
+ *  Con sponsored: chunks de 8 articles + 1 SponsoredRotator = 9 slots (3×3 lleno).
+ *  Sin sponsored: chunks de 9 articles = 9 slots (3×3 lleno, sin huecos).
+ *  Después de cada chunk intermedio viene una fila de 3 rectangle ads. */
 function renderGridWithAds(
   items: Article[],
   rectangleAds: Ad[],
@@ -296,9 +318,11 @@ function renderGridWithAds(
 ): React.ReactNode {
   if (items.length === 0) return null;
 
+  const hasSponsored = sponsoredItems.length > 0;
+  const chunkSize = hasSponsored ? 8 : 9;
   const chunks: Article[][] = [];
-  for (let i = 0; i < items.length; i += 8) {
-    chunks.push(items.slice(i, i + 8));
+  for (let i = 0; i < items.length; i += chunkSize) {
+    chunks.push(items.slice(i, i + chunkSize));
   }
 
   return (

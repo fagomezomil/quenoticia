@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import type { Article } from "@/lib/types";
 import { sectionConfig } from "@/lib/types";
+import { cardByline } from "@/lib/format";
 
 interface HeroEditorialProps {
   articles: Article[];
@@ -84,13 +85,20 @@ export default function HeroEditorial({ articles }: HeroEditorialProps) {
               {lead.excerpt}
             </p>
           )}
-          {((lead.author ?? lead.publisher) || lead.date) && (
-            <p className="mt-3 text-xs text-white/60 tracking-wide uppercase font-[family-name:var(--font-heading)]">
-              {(lead.author ?? lead.publisher) && <span>{lead.author ?? lead.publisher}</span>}
-              {(lead.author ?? lead.publisher) && lead.date && <span> · </span>}
-              {lead.date && <span>{lead.date}</span>}
-            </p>
-          )}
+          {(() => {
+            const { dateLine, source } = cardByline(lead);
+            if (!dateLine && !source) return null;
+            return (
+              <div className="mt-3 font-[family-name:var(--font-heading)]">
+                {dateLine && (
+                  <p className="text-xs text-white/60 tracking-wide uppercase" suppressHydrationWarning>
+                    {dateLine}
+                  </p>
+                )}
+                {source && <p className="text-xs text-white/50 truncate">{source}</p>}
+              </div>
+            );
+          })()}
         </div>
       </Link>
 
@@ -148,13 +156,20 @@ export default function HeroEditorial({ articles }: HeroEditorialProps) {
                   >
                     {a.title}
                   </h3>
-                  {((a.author ?? a.publisher) || a.date) && (
-                    <p className="text-xs text-muted mt-1.5 uppercase tracking-wide font-[family-name:var(--font-heading)]">
-                      {(a.author ?? a.publisher) && <span>{a.author ?? a.publisher}</span>}
-                      {(a.author ?? a.publisher) && a.date && <span> · </span>}
-                      {a.date && <span>{a.date}</span>}
-                    </p>
-                  )}
+                  {(() => {
+                    const { dateLine, source } = cardByline(a);
+                    if (!dateLine && !source) return null;
+                    return (
+                      <div className="mt-1.5 font-[family-name:var(--font-heading)]">
+                        {dateLine && (
+                          <p className="text-xs text-muted uppercase tracking-wide" suppressHydrationWarning>
+                            {dateLine}
+                          </p>
+                        )}
+                        {source && <p className="text-xs text-foreground/70 truncate">{source}</p>}
+                      </div>
+                    );
+                  })()}
                 </div>
               </Link>
             );

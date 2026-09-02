@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { Article, sectionConfig } from "@/lib/types";
+import { cardByline } from "@/lib/format";
 
 interface ArticleCardProps {
   article: Article;
@@ -102,10 +103,10 @@ export default function ArticleCard({
   sponsored = false,
 }: ArticleCardProps) {
   const cfg = sectionConfig[article.section];
-  const byline = article.author ?? article.publisher;
   const href = sponsored ? `/patrocinado/${article.id}` : `/${article.section}/${article.id}`;
 
   if (variant === "hero") {
+    const { dateLine, source } = cardByline(article);
     return (
       <article className="group">
         <Link href={href} prefetch={false}>
@@ -133,11 +134,8 @@ export default function ArticleCard({
             </p>
           )}
           <div className="mt-3 font-[family-name:var(--font-heading)]">
-            {byline && (
-              <span className="block text-xs text-foreground/70 mb-0.5 truncate">{byline}</span>
-            )}
-            <div className="flex items-center gap-2 text-xs text-muted uppercase tracking-wide">
-              <span>{article.date}</span>
+            <div className="flex items-center gap-2 text-xs text-muted uppercase tracking-wide" suppressHydrationWarning>
+              <span>{dateLine}</span>
               {commentCount !== undefined && commentCount > 0 && (
                 <>
                   <span>·</span>
@@ -150,6 +148,9 @@ export default function ArticleCard({
                 </>
               )}
             </div>
+            {source && (
+              <span className="block text-xs text-foreground/70 mb-0.5 truncate">{source}</span>
+            )}
           </div>
         </Link>
       </article>
@@ -157,6 +158,7 @@ export default function ArticleCard({
   }
 
   if (variant === "featured") {
+    const { dateLine, source } = cardByline(article);
     return (
       <article className="group bg-paper border-ink-2 shadow-hard h-full">
         <Link href={href} prefetch={false} className="flex flex-col sm:flex-row h-full">
@@ -192,8 +194,8 @@ export default function ArticleCard({
               </p>
             )}
             <div className="mt-3 font-[family-name:var(--font-heading)]">
-              {byline && <span className="block text-xs text-foreground/70 mb-0.5 truncate">{byline}</span>}
-              <span className="block text-xs text-muted uppercase tracking-wide">{article.date}</span>
+              <span className="block text-xs text-muted uppercase tracking-wide" suppressHydrationWarning>{dateLine}</span>
+              {source && <span className="block text-xs text-foreground/70 mt-0.5 truncate">{source}</span>}
             </div>
           </div>
         </Link>
@@ -250,8 +252,12 @@ export default function ArticleCard({
             )}
             {/* Byline */}
             <div className="mt-4 font-[family-name:var(--font-heading)]">
-              {byline && <span className="block text-xs text-white/50 mb-0.5 truncate">{byline}</span>}
-              <span className="block text-xs text-white/60 tracking-wide uppercase">{article.date}</span>
+              {(() => { const { dateLine, source } = cardByline(article); return (
+                <>
+                  <span className="block text-xs text-white/60 tracking-wide uppercase" suppressHydrationWarning>{dateLine}</span>
+                  {source && <span className="block text-xs text-white/50 mb-0.5 truncate">{source}</span>}
+                </>
+              ); })()}
             </div>
           </div>
           {/* Bottom urgente rule */}
@@ -262,6 +268,7 @@ export default function ArticleCard({
   }
 
   if (variant === "compact") {
+    const { dateLine } = cardByline(article);
     return (
       <article className="group py-3 border-b-2 border-ink last:border-0">
         <Link href={href} prefetch={false} className="flex gap-3">
@@ -293,7 +300,7 @@ export default function ArticleCard({
             <h3 className="display mt-0.5 text-sm leading-snug group-hover:text-brand line-clamp-2 transition-colors">
               {article.title}
             </h3>
-            <span className="text-xs text-muted uppercase tracking-wide font-[family-name:var(--font-heading)]">{article.date}</span>
+            <span className="text-xs text-muted uppercase tracking-wide font-[family-name:var(--font-heading)]" suppressHydrationWarning>{dateLine}</span>
           </div>
         </Link>
       </article>
@@ -302,6 +309,7 @@ export default function ArticleCard({
 
   // standard
   if (sponsored) {
+    const { dateLine, source } = cardByline(article);
     return (
       <article className="group bg-paper border-ink-2 shadow-hard h-full">
         <Link href={href} prefetch={false} className="flex flex-col h-full">
@@ -334,8 +342,8 @@ export default function ArticleCard({
               </p>
             )}
             <div className="mt-auto pt-3 font-[family-name:var(--font-heading)]">
-              {byline && <span className="block text-xs text-foreground/70 mb-0.5 truncate">{byline}</span>}
-              <span className="block text-xs text-muted uppercase tracking-wide">{article.date}</span>
+              <span className="block text-xs text-muted uppercase tracking-wide" suppressHydrationWarning>{dateLine}</span>
+              {source && <span className="block text-xs text-foreground/70 mt-0.5 truncate">{source}</span>}
             </div>
           </div>
         </Link>
@@ -344,51 +352,54 @@ export default function ArticleCard({
   }
 
   // standard
-  return (
-    <article className="group bg-paper border-ink-2 shadow-hard h-full">
-      <Link href={href} prefetch={false} className="flex flex-col h-full">
-        <div
-          className="h-36 sm:h-44 flex items-center justify-center relative overflow-hidden"
-          style={{ borderTop: `3px solid ${cfg.color}` }}
-        >
-          {article.imageUrl ? (
-            <NewsImage src={article.imageUrl} alt={article.imageAlt} sectionColor={cfg.color} variant="standard" />
-          ) : (
-            <div
-              className="absolute inset-0 halftone"
-              style={{ background: `linear-gradient(135deg, ${cfg.color}15, #0a0a0a 90%)` }}
-            />
-          )}
-          {!article.imageUrl && (
-            <span className="text-5xl font-[family-name:var(--font-heading)] opacity-30 text-white relative z-10 uppercase">LV</span>
-          )}
-        </div>
-        <div className="p-4 flex-1 flex flex-col">
-          <span
-            className="text-[11px] font-bold tracking-widest uppercase font-[family-name:var(--font-heading)]"
-            style={{ color: cfg.color }}
+  {
+    const { dateLine, source } = cardByline(article);
+    return (
+      <article className="group bg-paper border-ink-2 shadow-hard h-full">
+        <Link href={href} prefetch={false} className="flex flex-col h-full">
+          <div
+            className="h-36 sm:h-44 flex items-center justify-center relative overflow-hidden"
+            style={{ borderTop: `3px solid ${cfg.color}` }}
           >
-            {cfg.label}
-          </span>
-          <h3 className="display mt-0.5 text-lg leading-snug group-hover:text-brand line-clamp-2 transition-colors">
-            {article.title}
-          </h3>
-          {article.excerpt && (
-            <p className="mt-2 text-sm text-muted line-clamp-3 font-[family-name:var(--font-body)]">
-              {article.excerpt}
-            </p>
-          )}
-          <div className="mt-auto pt-3 font-[family-name:var(--font-heading)]">
-            {byline && <span className="block text-xs text-foreground/70 mb-0.5 truncate">{byline}</span>}
-            <div className="text-xs text-muted uppercase tracking-wide">
-              <span>{article.date}</span>
-              {commentCount !== undefined && commentCount > 0 && (
-                <> · <span className="inline-flex items-center gap-0.5"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3"><path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v5a2 2 0 01-2 2H6l-3 3V4z" /></svg>{commentCount}</span></>
-              )}
+            {article.imageUrl ? (
+              <NewsImage src={article.imageUrl} alt={article.imageAlt} sectionColor={cfg.color} variant="standard" />
+            ) : (
+              <div
+                className="absolute inset-0 halftone"
+                style={{ background: `linear-gradient(135deg, ${cfg.color}15, #0a0a0a 90%)` }}
+              />
+            )}
+            {!article.imageUrl && (
+              <span className="text-5xl font-[family-name:var(--font-heading)] opacity-30 text-white relative z-10 uppercase">LV</span>
+            )}
+          </div>
+          <div className="p-4 flex-1 flex flex-col">
+            <span
+              className="text-[11px] font-bold tracking-widest uppercase font-[family-name:var(--font-heading)]"
+              style={{ color: cfg.color }}
+            >
+              {cfg.label}
+            </span>
+            <h3 className="display mt-0.5 text-lg leading-snug group-hover:text-brand line-clamp-2 transition-colors">
+              {article.title}
+            </h3>
+            {article.excerpt && (
+              <p className="mt-2 text-sm text-muted line-clamp-3 font-[family-name:var(--font-body)]">
+                {article.excerpt}
+              </p>
+            )}
+            <div className="mt-auto pt-3 font-[family-name:var(--font-heading)]">
+              <div className="text-xs text-muted uppercase tracking-wide" suppressHydrationWarning>
+                <span>{dateLine}</span>
+                {commentCount !== undefined && commentCount > 0 && (
+                  <> · <span className="inline-flex items-center gap-0.5"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3"><path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v5a2 2 0 01-2 2H6l-3 3V4z" /></svg>{commentCount}</span></>
+                )}
+              </div>
+              {source && <span className="block text-xs text-foreground/70 mt-0.5 truncate">{source}</span>}
             </div>
           </div>
-        </div>
-      </Link>
-    </article>
-  );
+        </Link>
+      </article>
+    );
+  }
 }
