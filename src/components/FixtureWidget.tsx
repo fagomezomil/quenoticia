@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import type { SportsMatch, SportType } from "@/lib/types";
-import { currentMatchday } from "@/lib/sports";
+import { currentMatchday } from "@/lib/sports-utils";
 import MatchCard from "./MatchCard";
 
 interface FixtureWidgetProps {
