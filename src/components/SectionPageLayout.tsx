@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Header from "@/components/Header";
 import NavbarWrapper from "@/components/NavbarWrapper";
 import BreakingNews from "@/components/BreakingNews";
@@ -22,6 +23,8 @@ interface SectionPageLayoutProps {
   sponsoredItems?: Article[];
   page?: number;
   perPage?: number;
+  /** Slot derecho (1/3) — si se pasa, el grid de notas pasa a 2 cols y el slot va sticky a la derecha. */
+  rightSlot?: ReactNode;
 }
 
 const PER_PAGE = 11;
@@ -37,6 +40,7 @@ export default function SectionPageLayout({
   sponsoredItems = [],
   page = 1,
   perPage = PER_PAGE,
+  rightSlot,
 }: SectionPageLayoutProps) {
   const cfg = sectionConfig[section];
 
@@ -274,13 +278,35 @@ export default function SectionPageLayout({
               </span>
             </div>
 
-            {renderGridWithAds(gridItems, rectangleAds, sponsoredIds, sponsoredItems)}
+            {rightSlot ? (
+              <div className="lg:grid lg:grid-cols-[2fr_1fr] gap-8">
+                <div>
+                  {renderGridWithAds(gridItems, rectangleAds, sponsoredIds, sponsoredItems, true)}
+                </div>
+                <aside className="lg:sticky lg:top-4 self-start">
+                  {rightSlot}
+                </aside>
+              </div>
+            ) : (
+              renderGridWithAds(gridItems, rectangleAds, sponsoredIds, sponsoredItems)
+            )}
           </>
         )}
 
         {/* Pages 2+ — flat grid of standard cards */}
         {!isFirstPage && gridItems.length > 0 && (
-          renderGridWithAds(gridItems, rectangleAds, sponsoredIds, sponsoredItems)
+          rightSlot ? (
+            <div className="lg:grid lg:grid-cols-[2fr_1fr] gap-8">
+              <div>
+                {renderGridWithAds(gridItems, rectangleAds, sponsoredIds, sponsoredItems, true)}
+              </div>
+              <aside className="lg:sticky lg:top-4 self-start">
+                {rightSlot}
+              </aside>
+            </div>
+          ) : (
+            renderGridWithAds(gridItems, rectangleAds, sponsoredIds, sponsoredItems)
+          )
         )}
 
         {/* Pagination — comic noir */}
@@ -314,12 +340,19 @@ function renderGridWithAds(
   items: Article[],
   rectangleAds: Ad[],
   sponsoredIds: Set<string>,
-  sponsoredItems: Article[]
-): React.ReactNode {
+  sponsoredItems: Article[],
+  compactGrid = false
+): ReactNode {
   if (items.length === 0) return null;
 
   const hasSponsored = sponsoredItems.length > 0;
-  const chunkSize = hasSponsored ? 8 : 9;
+  // compactGrid (2-col): chunks más chicos para SponsoredRotator cada 4 notas.
+  const chunkSize = compactGrid
+    ? (hasSponsored ? 4 : 6)
+    : (hasSponsored ? 8 : 9);
+  const gridCols = compactGrid ? "lg:grid-cols-2" : "lg:grid-cols-3";
+  const adGridCols = compactGrid ? "lg:grid-cols-2" : "lg:grid-cols-3";
+  const adSlots = compactGrid ? 2 : 3;
   const chunks: Article[][] = [];
   for (let i = 0; i < items.length; i += chunkSize) {
     chunks.push(items.slice(i, i + chunkSize));
@@ -329,7 +362,7 @@ function renderGridWithAds(
     <div className="space-y-8">
       {chunks.map((chunk, idx) => (
         <div key={idx}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={`grid grid-cols-1 sm:grid-cols-2 ${gridCols} gap-6`}>
             {chunk.map((a) => (
               <ArticleCard
                 key={a.id}
@@ -338,18 +371,18 @@ function renderGridWithAds(
                 sponsored={sponsoredIds.has(a.id)}
               />
             ))}
-            {/* SponsoredRotator como 9º item inline — rota todos los patrocinados cada 15s,
+            {/* SponsoredRotator como último item inline — rota todos los patrocinados cada 15s,
                 independiente de otros contenedores. Sólo entre chunks, no al final. */}
             {idx < chunks.length - 1 && sponsoredItems.length > 0 && (
               <SponsoredRotator sponsored={sponsoredItems} />
             )}
           </div>
           {/* Rectangle ad row después del chunk+rotator (excepto último chunk).
-              Siempre 3 slots aunque haya menos rectangles activos — AdRotator rota
+              Siempre ${adSlots} slots aunque haya menos rectangles activos — AdRotator rota
               entre los disponibles y rellena los slots vacíos. */}
           {idx < chunks.length - 1 && rectangleAds.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-              {Array.from({ length: 3 }).map((_, i) => (
+            <div className={`grid grid-cols-1 sm:grid-cols-2 ${adGridCols} gap-6 mt-8`}>
+              {Array.from({ length: adSlots }).map((_, i) => (
                 <div key={`rect-${idx}-${i}`}>
                   <AdRotator ads={rectangleAds} size="rectangle" />
                 </div>

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { SECTION_META, SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/site";
 import { renderStandardSectionPage, SECTION_SUBTITLES } from "@/lib/section-page";
+import { getSportsMatches } from "@/lib/sports";
+import FixtureWidget from "@/components/FixtureWidget";
 
 export const revalidate = 300;
 
@@ -23,5 +25,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DeportesPage() {
-  return renderStandardSectionPage("deportes", 1, SECTION_SUBTITLES.deportes);
+  const matches = await getSportsMatches();
+  const rightSlot = matches.length > 0 ? <FixtureWidget matches={matches} /> : null;
+  return renderStandardSectionPage("deportes", 1, SECTION_SUBTITLES.deportes, rightSlot);
 }

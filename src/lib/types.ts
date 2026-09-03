@@ -2,6 +2,35 @@ export type Section = "politica" | "deportes" | "economia" | "internacionales" |
 
 export type AgendaCategory = "cultural" | "turistico" | "deportivo";
 
+export type SportType = "futbol" | "basquet" | "rugby";
+
+export type MatchStatus = "scheduled" | "live" | "played" | "postponed";
+
+export interface SportsMatch {
+  id: string;
+  sport: SportType;
+  tournament: string;
+  season: string;
+  matchday: number;
+  match_id: string;
+  home_team: string;
+  away_team: string;
+  home_score: number | null;
+  away_score: number | null;
+  kickoff_at: string | null;
+  match_date: string; // YYYY-MM-DD
+  time: string | null;
+  stadium: string | null;
+  city: string | null;
+  status: MatchStatus;
+  team_colors: { home: string; away: string } | null;
+  team_initials: { home: string; away: string } | null;
+  is_local_tucuman: boolean;
+  source_name: string;
+  source_url: string | null;
+  active: boolean;
+}
+
 export interface AgendaEvent {
   id: string;
   title: string;

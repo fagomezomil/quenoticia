@@ -6,6 +6,8 @@ import {
   STANDARD_SECTIONS,
 } from "@/lib/section-page";
 import { SECTION_META, SITE_URL, SITE_NAME } from "@/lib/site";
+import { getSportsMatches } from "@/lib/sports";
+import FixtureWidget from "@/components/FixtureWidget";
 import type { Section } from "@/lib/types";
 
 export const revalidate = 300;
@@ -62,5 +64,11 @@ export default async function SectionPaginationPage({ params }: PageProps) {
   const section = parseSection(rawSection);
   const page = Math.max(1, parseInt(rawPage, 10) || 1);
   if (!section || page < 2) notFound();
+  // /deportes/pagina/N también muestra el fixture widget
+  if (section === "deportes") {
+    const matches = await getSportsMatches();
+    const slot = matches.length > 0 ? <FixtureWidget matches={matches} /> : null;
+    return renderStandardSectionPage(section, page, SECTION_SUBTITLES[section], slot);
+  }
   return renderStandardSectionPage(section, page, SECTION_SUBTITLES[section]);
 }

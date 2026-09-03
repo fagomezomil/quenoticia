@@ -60,6 +60,7 @@
   --color-cat-cultural: #db2777;
   --color-cat-turistico: #0891b2;
   --color-cat-deportivo: #65a30d;
+  --color-live: #dc2626;
 }
 
 body {
@@ -126,6 +127,8 @@ h6 {
 .text-cat-deportivo { color: var(--color-cat-deportivo); }
 .text-brand { color: var(--color-brand); }
 .bg-brand { background-color: var(--color-brand); }
+.text-live { color: var(--color-live); }
+.bg-live { background-color: var(--color-live); }
 .text-urgente { color: var(--color-urgente); }
 .bg-urgente { background-color: var(--color-urgente); }
 .fade-urgente-r { background: linear-gradient(to right, var(--color-urgente), transparent); }

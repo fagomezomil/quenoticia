@@ -26,11 +26,13 @@ function sponsoredToArticle(s: SponsoredContent): Article {
 }
 
 /** Renderiza una página de sección estándar (politica, deportes, economia,
- *  internacionales, tucuman). Usado tanto por /seccion como por /seccion/pagina/[page]. */
+ *  internacionales, tucuman). Usado tanto por /seccion como por /seccion/pagina/[page].
+ *  rightSlot: si se pasa, el grid de notas pasa a 2 cols y el slot va sticky a la derecha (1/3). */
 export async function renderStandardSectionPage(
   section: Section,
   page: number,
   subtitle: string,
+  rightSlot?: React.ReactNode,
 ): Promise<React.ReactElement> {
   const [apiArticles, ads, customArticles, sponsoredContent] = await Promise.all([
     fetchSectionArticles(section),
@@ -65,6 +67,7 @@ export async function renderStandardSectionPage(
         sponsoredIds={sponsoredIds}
         sponsoredItems={sponsoredItems}
         page={page}
+        rightSlot={rightSlot}
       />
     </>
   );
