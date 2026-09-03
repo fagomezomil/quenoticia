@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import type { SportsMatch, SportType } from "@/lib/types";
+import { currentMatchday } from "@/lib/sports";
 import MatchCard from "./MatchCard";
 
 interface FixtureWidgetProps {
@@ -35,21 +36,18 @@ export default function FixtureWidget({ matches, limit = 5 }: FixtureWidgetProps
 
   const [active, setActive] = useState<SportType>(availableSports[0] || "futbol");
 
-  // Filtrar y ordenar: próximos (scheduled/live) primero, luego últimos played
+  // Mostrar SOLO los partidos de la fecha actual (matchday en curso)
   const visible = useMemo(() => {
     const sportMatches = matches.filter((m) => m.sport === active);
-    const upcoming = sportMatches
-      .filter((m) => m.status === "scheduled" || m.status === "live")
-      .sort((a, b) => (a.kickoff_at || a.match_date).localeCompare(b.kickoff_at || b.match_date));
-    const recent = sportMatches
-      .filter((m) => m.status === "played")
-      .sort((a, b) => (b.kickoff_at || b.match_date).localeCompare(a.kickoff_at || a.match_date))
-      .slice(0, 2);
-    return [...upcoming, ...recent].slice(0, limit);
+    const md = currentMatchday(sportMatches, active);
+    return sportMatches
+      .filter((m) => m.matchday === md)
+      .sort((a, b) => (a.kickoff_at || a.match_date).localeCompare(b.kickoff_at || b.match_date))
+      .slice(0, limit);
   }, [matches, active, limit]);
 
-  const tournament = visible[0]?.tournament || "";
-  const matchday = visible[0]?.matchday;
+  const tournament = visible[0]?.tournament || matches.find((m) => m.sport === active)?.tournament || "";
+  const matchday = visible[0]?.matchday ?? currentMatchday(matches.filter((m) => m.sport === active), active);
 
   if (availableSports.length === 0) {
     return (

@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import type { SportsMatch, SportType } from "@/lib/types";
+import { currentMatchday } from "@/lib/sports";
 import MatchCard from "./MatchCard";
 
 const SPORT_LABELS: Record<SportType, { label: string; tournament: string }> = {
@@ -41,18 +42,10 @@ export default function FixturePage({ matches, sport }: FixturePageProps) {
     return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
   }, [matches]);
 
-  // Determinar fecha "actual" = la que tiene próximos partidos, o la última jugada
-  const currentMatchday = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    for (const [md, ms] of matchdays) {
-      const hasUpcoming = ms.some((m) => m.status === "scheduled" || m.status === "live");
-      if (hasUpcoming) return md;
-    }
-    // Si no hay upcoming, la última fecha
-    return matchdays.length > 0 ? matchdays[matchdays.length - 1][0] : 1;
-  }, [matchdays]);
+  // Determinar fecha "actual" usando helper compartido
+  const defaultMatchday = useMemo(() => currentMatchday(matches, sport), [matches, sport]);
 
-  const [selected, setSelected] = useState<number>(currentMatchday);
+  const [selected, setSelected] = useState<number>(defaultMatchday);
 
   const selectedMatches = matchdays.find(([md]) => md === selected)?.[1] ?? [];
   const played = selectedMatches.filter((m) => m.status === "played").length;
