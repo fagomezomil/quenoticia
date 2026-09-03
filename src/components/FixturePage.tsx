@@ -3,8 +3,10 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import type { SportsMatch, SportType } from "@/lib/types";
-import { currentMatchday } from "@/lib/sports-utils";
+import { currentMatchday, currentTournament, filterByTournament, type Tournament } from "@/lib/sports-utils";
+import type { StandingRow } from "@/lib/sports";
 import MatchCard from "./MatchCard";
+import StandingsTable from "./StandingsTable";
 
 const SPORT_LABELS: Record<SportType, { label: string; tournament: string }> = {
   futbol: { label: "Fútbol", tournament: "Liga Profesional" },
@@ -27,23 +29,36 @@ function dateRangeLabel(matches: SportsMatch[]): string {
 interface FixturePageProps {
   matches: SportsMatch[];
   sport: SportType;
+  standingsA?: StandingRow[];
+  standingsB?: StandingRow[];
 }
 
-export default function FixturePage({ matches, sport }: FixturePageProps) {
+export default function FixturePage({ matches, sport, standingsA, standingsB }: FixturePageProps) {
   const meta = SPORT_LABELS[sport];
 
-  // Agrupar por matchday
+  // Filtrar al torneo actual (Apertura o Clausura según la fecha)
+  const tournament = useMemo<Tournament>(() => currentTournament(matches), [matches]);
+  const tournamentMatches = useMemo(
+    () => filterByTournament(matches, tournament),
+    [matches, tournament],
+  );
+  const tournamentLabel = tournament === "apertura" ? "Apertura" : "Clausura";
+
+  // Agrupar por matchday (solo partidos del torneo actual → 15 por fecha)
   const matchdays = useMemo(() => {
     const map = new Map<number, SportsMatch[]>();
-    for (const m of matches) {
+    for (const m of tournamentMatches) {
       if (!map.has(m.matchday)) map.set(m.matchday, []);
       map.get(m.matchday)!.push(m);
     }
     return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
-  }, [matches]);
+  }, [tournamentMatches]);
 
   // Determinar fecha "actual" usando helper compartido
-  const defaultMatchday = useMemo(() => currentMatchday(matches, sport), [matches, sport]);
+  const defaultMatchday = useMemo(
+    () => currentMatchday(tournamentMatches, sport),
+    [tournamentMatches, sport],
+  );
 
   const [selected, setSelected] = useState<number>(defaultMatchday);
 
@@ -67,7 +82,7 @@ export default function FixturePage({ matches, sport }: FixturePageProps) {
         <div className="bg-ink text-paper px-5 py-4 flex items-center gap-4 flex-wrap">
           <div>
             <p className="text-[10px] uppercase tracking-[0.18em] opacity-70 font-[family-name:var(--font-heading)]">
-              {meta.tournament} · {matches[0]?.season ?? ""}
+              {meta.tournament} {tournamentLabel} · {matches[0]?.season ?? ""}
             </p>
             <h1 className="text-3xl font-bold font-[family-name:var(--font-heading)] leading-none tracking-tight" style={{ textTransform: "none" }}>
               Fecha <span className="text-brand">{selected}</span>
@@ -117,20 +132,35 @@ export default function FixturePage({ matches, sport }: FixturePageProps) {
         )}
       </div>
 
-      {/* Matches grid */}
-      {selectedMatches.length === 0 ? (
-        <div className="border-2 border-ink bg-paper p-12 text-center">
-          <p className="text-muted font-[family-name:var(--font-heading)] uppercase tracking-wide text-sm">
-            No hay partidos cargados para esta fecha
-          </p>
+      {/* Matches + Standings layout: 2/3 + 1/3 en desktop */}
+      <div className="lg:grid lg:grid-cols-[2fr_1fr] lg:gap-6">
+        {/* Matches */}
+        <div>
+          {selectedMatches.length === 0 ? (
+            <div className="border-2 border-ink bg-paper p-12 text-center">
+              <p className="text-muted font-[family-name:var(--font-heading)] uppercase tracking-wide text-sm">
+                No hay partidos cargados para esta fecha
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {selectedMatches.map((m) => (
+                <MatchCard key={m.match_id} match={m} variant="card" />
+              ))}
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {selectedMatches.map((m) => (
-            <MatchCard key={m.match_id} match={m} variant="card" />
-          ))}
+
+        {/* Standings — 2 tablas (Grupo A y Grupo B) */}
+        <div className="mt-6 lg:mt-0 space-y-4">
+          {standingsA && standingsA.length > 0 && (
+            <StandingsTable rows={standingsA} variant="compact" title="Grupo A" />
+          )}
+          {standingsB && standingsB.length > 0 && (
+            <StandingsTable rows={standingsB} variant="compact" title="Grupo B" />
+          )}
         </div>
-      )}
+      </div>
 
       {/* Footer link */}
       <div className="mt-8 text-center">

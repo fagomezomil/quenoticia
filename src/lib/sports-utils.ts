@@ -1,5 +1,45 @@
 import type { SportsMatch, SportType } from "@/lib/types";
 
+export type Tournament = "apertura" | "clausura";
+
+/** Determina el torneo (Apertura/Clausura) al que pertenece un partido por mes.
+ *  Apertura = primera mitad del año (mes 1-6), Clausura = segunda (mes 7-12).
+ *  Convención LPF 2026: Apertura ene-jun, Clausura jul-nov. */
+export function tournamentOf(matchDate: string): Tournament {
+  const month = parseInt(matchDate.slice(5, 7), 10);
+  return month <= 6 ? "apertura" : "clausura";
+}
+
+/** Torneo "actual": el que tiene partidos upcoming (scheduled/live) más cercanos a today.
+ *  Si solo uno tiene upcoming → ese. Si ambos o ninguno → por mes del año. */
+export function currentTournament(matches: SportsMatch[]): Tournament {
+  const today = new Date().toISOString().slice(0, 10);
+  const aperturaUpcoming = matches.some(
+    (m) =>
+      tournamentOf(m.match_date) === "apertura" &&
+      m.match_date >= today &&
+      (m.status === "scheduled" || m.status === "live"),
+  );
+  const clausuraUpcoming = matches.some(
+    (m) =>
+      tournamentOf(m.match_date) === "clausura" &&
+      m.match_date >= today &&
+      (m.status === "scheduled" || m.status === "live"),
+  );
+  if (aperturaUpcoming && !clausuraUpcoming) return "apertura";
+  if (clausuraUpcoming && !aperturaUpcoming) return "clausura";
+  const month = parseInt(today.slice(5, 7), 10);
+  return month <= 6 ? "apertura" : "clausura";
+}
+
+/** Filtra los partidos al torneo indicado. */
+export function filterByTournament(
+  matches: SportsMatch[],
+  tournament: Tournament,
+): SportsMatch[] {
+  return matches.filter((m) => tournamentOf(m.match_date) === tournament);
+}
+
 /** Determina la matchday "actual" para un set de partidos:
  *  - La matchday cuyo rango de fechas (primero a último partido) contiene a today.
  *  - Si today > último partido de todas las jugadas → próxima matchday con scheduled.

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getSportsMatchesBySport } from "@/lib/sports";
+import { getSportsMatchesBySport, getStandings } from "@/lib/sports";
 import FixturePage from "@/components/FixturePage";
 import Header from "@/components/Header";
 import NavbarWrapper from "@/components/NavbarWrapper";
@@ -15,13 +15,22 @@ export const metadata: Metadata = {
 };
 
 export default async function DeportesFutbolPage() {
-  const matches = await getSportsMatchesBySport("futbol");
+  const [matches, standingsA, standingsB] = await Promise.all([
+    getSportsMatchesBySport("futbol"),
+    getStandings("futbol", "A"),
+    getStandings("futbol", "B"),
+  ]);
   return (
     <>
       <Header />
       <NavbarWrapper />
       <main>
-        <FixturePage matches={matches} sport="futbol" />
+        <FixturePage
+          matches={matches}
+          sport="futbol"
+          standingsA={standingsA}
+          standingsB={standingsB}
+        />
       </main>
       <Footer />
     </>

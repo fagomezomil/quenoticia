@@ -3,13 +3,19 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import type { SportsMatch, SportType } from "@/lib/types";
-import { currentMatchday } from "@/lib/sports-utils";
+import { currentMatchday, currentTournament, filterByTournament } from "@/lib/sports-utils";
+import type { StandingRow } from "@/lib/sports";
 import MatchCard from "./MatchCard";
+import StandingsTable from "./StandingsTable";
 
 interface FixtureWidgetProps {
   matches: SportsMatch[];
   /** Cuántos partidos mostrar por tab (default 5) */
   limit?: number;
+  /** Tabla de posiciones grupo A (top 5 widget) */
+  standingsA?: StandingRow[];
+  /** Tabla de posiciones grupo B (top 5 widget) */
+  standingsB?: StandingRow[];
 }
 
 const SPORT_LABELS: Record<SportType, string> = {
@@ -24,7 +30,7 @@ const SPORT_PATHS: Record<SportType, string> = {
   rugby: "/deportes/rugby",
 };
 
-export default function FixtureWidget({ matches, limit = 5 }: FixtureWidgetProps) {
+export default function FixtureWidget({ matches, limit = 5, standingsA, standingsB }: FixtureWidgetProps) {
   // Determinar qué deportes tienen partidos
   const availableSports = useMemo(() => {
     const sports: SportType[] = [];
@@ -36,18 +42,29 @@ export default function FixtureWidget({ matches, limit = 5 }: FixtureWidgetProps
 
   const [active, setActive] = useState<SportType>(availableSports[0] || "futbol");
 
-  // Mostrar SOLO los partidos de la fecha actual (matchday en curso)
+  // Mostrar SOLO los partidos de la fecha actual (matchday en curso) del torneo actual
   const visible = useMemo(() => {
     const sportMatches = matches.filter((m) => m.sport === active);
-    const md = currentMatchday(sportMatches, active);
-    return sportMatches
+    const tournament = currentTournament(sportMatches);
+    const tournamentMatches = filterByTournament(sportMatches, tournament);
+    const md = currentMatchday(tournamentMatches, active);
+    return tournamentMatches
       .filter((m) => m.matchday === md)
       .sort((a, b) => (a.kickoff_at || a.match_date).localeCompare(b.kickoff_at || b.match_date))
       .slice(0, limit);
   }, [matches, active, limit]);
 
+  const tournamentLabel = useMemo(() => {
+    const sportMatches = matches.filter((m) => m.sport === active);
+    const t = currentTournament(sportMatches);
+    return t === "apertura" ? "Apertura" : "Clausura";
+  }, [matches, active]);
+
   const tournament = visible[0]?.tournament || matches.find((m) => m.sport === active)?.tournament || "";
-  const matchday = visible[0]?.matchday ?? currentMatchday(matches.filter((m) => m.sport === active), active);
+  const matchday = visible[0]?.matchday ?? currentMatchday(
+    filterByTournament(matches.filter((m) => m.sport === active), currentTournament(matches.filter((m) => m.sport === active))),
+    active,
+  );
 
   if (availableSports.length === 0) {
     return (
@@ -66,7 +83,7 @@ export default function FixtureWidget({ matches, limit = 5 }: FixtureWidgetProps
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[9px] uppercase tracking-[0.18em] opacity-60 font-[family-name:var(--font-heading)] truncate">
-              {tournament || "Fixture"}
+              {tournament || "Fixture"} · {tournamentLabel}
             </p>
             <h2 className="text-base font-bold font-[family-name:var(--font-heading)] leading-tight truncate" style={{ textTransform: "none" }}>
               {matchday ? `Fecha ${matchday}` : "Próximos partidos"}
@@ -113,6 +130,24 @@ export default function FixtureWidget({ matches, limit = 5 }: FixtureWidgetProps
           visible.map((m) => <MatchCard key={`${m.sport}-${m.match_id}`} match={m} variant="row" />)
         )}
       </div>
+
+      {/* Standings: 5 del Grupo A + 5 del Grupo B + ver todos */}
+      {((standingsA && standingsA.length > 0) || (standingsB && standingsB.length > 0)) && (
+        <>
+          {standingsA && standingsA.length > 0 && (
+            <StandingsTable rows={standingsA} limit={5} variant="compact" title="Grupo A" />
+          )}
+          {standingsB && standingsB.length > 0 && (
+            <StandingsTable rows={standingsB} limit={5} variant="compact" title="Grupo B" />
+          )}
+          <Link
+            href="/deportes/futbol"
+            className="block bg-ink text-paper text-[10px] uppercase tracking-[0.14em] font-bold text-center py-2 hover:bg-brand hover:text-ink transition-colors font-[family-name:var(--font-heading)]"
+          >
+            Ver todos →
+          </Link>
+        </>
+      )}
     </div>
   );
 }
