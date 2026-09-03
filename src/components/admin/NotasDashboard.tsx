@@ -14,6 +14,7 @@ export default function NotasDashboard({ articles }: NotasDashboardProps) {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [layoutFilter, setLayoutFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("today");
   const [viewMode, setViewMode] = useState<"cards" | "list">("list");
 
   const filters = [
@@ -32,11 +33,39 @@ export default function NotasDashboard({ articles }: NotasDashboardProps) {
     { label: "Normal", value: "normal" },
   ];
 
+  const dateFilters = [
+    { label: "Todas las fechas", value: "all" },
+    { label: "Hoy", value: "today" },
+    { label: "Ayer", value: "yesterday" },
+    { label: "Últimos 7 días", value: "7d" },
+    { label: "Último mes", value: "30d" },
+  ];
+
   const filtered = useMemo(() => {
     const searchLower = search.toLowerCase();
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfYesterday = new Date(startOfToday.getTime() - 86400000);
+    const cutoff7d = new Date(now.getTime() - 7 * 86400000);
+    const cutoff30d = new Date(now.getTime() - 30 * 86400000);
+
     return articles.filter((article) => {
       if (activeFilter !== "all" && article.section !== activeFilter) return false;
       if (layoutFilter !== "all" && (article.layout || "normal") !== layoutFilter) return false;
+      if (dateFilter !== "all") {
+        const ts = article.sortDate || article.created_at;
+        if (!ts) return false;
+        const d = new Date(ts);
+        if (dateFilter === "today") {
+          if (d < startOfToday) return false;
+        } else if (dateFilter === "yesterday") {
+          if (d < startOfYesterday || d >= startOfToday) return false;
+        } else if (dateFilter === "7d") {
+          if (d < cutoff7d) return false;
+        } else if (dateFilter === "30d") {
+          if (d < cutoff30d) return false;
+        }
+      }
       if (search !== "") {
         const matchesSearch =
           article.title.toLowerCase().includes(searchLower) ||
@@ -45,7 +74,7 @@ export default function NotasDashboard({ articles }: NotasDashboardProps) {
       }
       return true;
     });
-  }, [articles, activeFilter, layoutFilter, search]);
+  }, [articles, activeFilter, layoutFilter, dateFilter, search]);
 
   const viewToggle = (
     <div className="ml-auto flex items-center gap-1 p-1 bg-ink/5 rounded">
@@ -87,11 +116,13 @@ export default function NotasDashboard({ articles }: NotasDashboardProps) {
   const hasActiveFilters =
     activeFilter !== "all" ||
     layoutFilter !== "all" ||
+    dateFilter !== "today" ||
     search !== "";
 
   const clearFilters = () => {
     setActiveFilter("all");
     setLayoutFilter("all");
+    setDateFilter("today");
     setSearch("");
   };
 
@@ -110,7 +141,7 @@ export default function NotasDashboard({ articles }: NotasDashboardProps) {
         toolbarRight={viewToggle}
       />
 
-      {/* Filtros secundarios: formato + borrar + count */}
+      {/* Filtros secundarios: formato + fecha + borrar + count */}
       <div className="flex items-center gap-3 flex-wrap mb-4 -mt-3">
         <select
           value={layoutFilter}
@@ -119,6 +150,16 @@ export default function NotasDashboard({ articles }: NotasDashboardProps) {
         >
           {layoutFilters.map((lf) => (
             <option key={lf.value} value={lf.value}>{lf.label}</option>
+          ))}
+        </select>
+
+        <select
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="px-3 py-1.5 text-xs border border-border rounded bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)]"
+        >
+          {dateFilters.map((df) => (
+            <option key={df.value} value={df.value}>{df.label}</option>
           ))}
         </select>
 

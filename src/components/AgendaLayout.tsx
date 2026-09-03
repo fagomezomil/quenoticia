@@ -16,11 +16,15 @@ interface AgendaLayoutProps {
   sidebarAds?: Ad[];
 }
 
+type CatFilter = AgendaCategory | "all";
+
 const CAT_META: Record<AgendaCategory, { label: string; color: string; bgClass: string; textClass: string }> = {
   cultural: { label: "Cultural", color: "var(--color-cat-cultural)", bgClass: "bg-cat-cultural", textClass: "text-cat-cultural" },
   turistico: { label: "Turístico", color: "var(--color-cat-turistico)", bgClass: "bg-cat-turistico", textClass: "text-cat-turistico" },
   deportivo: { label: "Deportivo", color: "var(--color-cat-deportivo)", bgClass: "bg-cat-deportivo", textClass: "text-cat-deportivo" },
 };
+
+const CAT_ORDER: AgendaCategory[] = ["cultural", "turistico", "deportivo"];
 
 const SOURCE_LABELS: Record<string, string> = {
   teatro_alberdi: "Teatro Alberdi",
@@ -172,6 +176,7 @@ function EventModal({ event, onClose }: { event: AgendaEvent; onClose: () => voi
 
 function EventCard({ e, onOpen }: { e: AgendaEvent; onOpen: (e: AgendaEvent) => void }) {
   const cat = CAT_META[e.category];
+  const monthName = e.date ? MONTHS_ES[new Date(e.date + "T00:00:00").getMonth()] : "";
   return (
     <button
       onClick={() => onOpen(e)}
@@ -203,9 +208,16 @@ function EventCard({ e, onOpen }: { e: AgendaEvent; onOpen: (e: AgendaEvent) => 
         </span>
       </div>
       <div className="p-3.5 flex flex-col gap-2 flex-1">
-        <span className="text-[10px] uppercase tracking-[0.14em] font-semibold text-agenda-deep font-[family-name:var(--font-heading)]">
-          {e.time}
-        </span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] uppercase tracking-[0.14em] font-semibold text-agenda-deep font-[family-name:var(--font-heading)]">
+            {e.time}
+          </span>
+          {monthName && (
+            <span className="text-[9px] uppercase tracking-[0.14em] text-muted font-[family-name:var(--font-heading)] border border-ink/15 px-1.5 py-0.5 rounded-sm">
+              {monthName}
+            </span>
+          )}
+        </div>
         <h3
           className="text-[17px] font-semibold font-[family-name:var(--font-heading)] text-ink leading-[1.15] tracking-tight group-hover:text-agenda transition-colors"
           style={{ textTransform: "none" }}
@@ -224,8 +236,14 @@ function EventCard({ e, onOpen }: { e: AgendaEvent; onOpen: (e: AgendaEvent) => 
   );
 }
 
+const PAGE_SIZE = 9;
+
 function CategorySection({ category, events, onOpen }: { category: AgendaCategory; events: AgendaEvent[]; onOpen: (e: AgendaEvent) => void }) {
   const cat = CAT_META[category];
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  const shown = events.slice(0, visible);
+  const hasMore = events.length > visible;
+
   return (
     <section className="mb-9">
       <div className="flex items-center gap-3 mb-4 border-b border-ink pb-2">
@@ -234,12 +252,28 @@ function CategorySection({ category, events, onOpen }: { category: AgendaCategor
           {cat.label}
         </h2>
         <span className="ml-auto text-[11px] uppercase tracking-[0.14em] text-muted font-[family-name:var(--font-heading)]">
-          {events.length} evento{events.length !== 1 ? "s" : ""} esta semana
+          {events.length} evento{events.length !== 1 ? "s" : ""} próximos
         </span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {events.map((e) => <EventCard key={e.id} e={e} onOpen={onOpen} />)}
+        {shown.map((e) => <EventCard key={e.id} e={e} onOpen={onOpen} />)}
       </div>
+      {hasMore && (
+        <div className="text-center mt-5">
+          <button
+            onClick={() => setVisible((v) => v + PAGE_SIZE)}
+            className="inline-flex items-center gap-2 bg-paper text-ink font-[family-name:var(--font-heading)] uppercase tracking-[0.14em] font-semibold text-xs px-5 py-2.5 border-2 border-ink shadow-hard-sm hover:bg-ink hover:text-paper transition-colors"
+          >
+            Cargar más eventos
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-muted font-[family-name:var(--font-heading)]">
+            {shown.length} de {events.length}
+          </p>
+        </div>
+      )}
     </section>
   );
 }
@@ -249,7 +283,7 @@ function HeroEvent({ e, onOpen }: { e: AgendaEvent; onOpen: (e: AgendaEvent) => 
   return (
     <button
       onClick={() => onOpen(e)}
-      className="group block w-full text-left mb-10 border-2 border-ink bg-paper shadow-hard-lg"
+      className="group block w-full text-left border-2 border-ink bg-paper shadow-hard-lg"
       style={{ boxShadow: "6px 6px 0 var(--color-agenda)" }}
     >
       <div className="grid grid-cols-1 md:grid-cols-[1.2fr_1fr]">
@@ -296,6 +330,51 @@ function HeroEvent({ e, onOpen }: { e: AgendaEvent; onOpen: (e: AgendaEvent) => 
   );
 }
 
+function HeroSlider({ events, onOpen }: { events: AgendaEvent[]; onOpen: (e: AgendaEvent) => void }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const advance = useCallback(() => {
+    setActiveIndex((i) => (i + 1) % events.length);
+  }, [events.length]);
+
+  // Auto-advance cada 10s si hay más de 1 evento
+  useEffect(() => {
+    if (events.length <= 1) return;
+    const timer = setInterval(advance, 10000);
+    return () => clearInterval(timer);
+  }, [advance, events.length]);
+
+  // Reset al primer slide cuando cambia el set de eventos (ej: filtro)
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [events.length, events[0]?.id]);
+
+  if (events.length === 0) return null;
+  const current = events[activeIndex];
+
+  return (
+    <div className="mb-10">
+      <HeroEvent e={current} onOpen={onOpen} />
+      {events.length > 1 && (
+        <div className="flex justify-center gap-2 mt-4">
+          {events.map((e, i) => (
+            <button
+              key={e.id}
+              onClick={() => setActiveIndex(i)}
+              aria-label={`Ir a slide ${i + 1}: ${e.title}`}
+              className={`h-2 rounded-full transition-all ${
+                i === activeIndex
+                  ? "w-8 bg-agenda"
+                  : "w-2 bg-ink/20 hover:bg-ink/40"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MiniRow({ e, onOpen }: { e: AgendaEvent; onOpen: (e: AgendaEvent) => void }) {
   const cat = CAT_META[e.category];
   return (
@@ -312,6 +391,8 @@ function MiniRow({ e, onOpen }: { e: AgendaEvent; onOpen: (e: AgendaEvent) => vo
   );
 }
 
+const MONTHS_ES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
 export default function AgendaLayout({
   events,
   leaderboardTop,
@@ -319,16 +400,48 @@ export default function AgendaLayout({
   sidebarAds = [],
 }: AgendaLayoutProps) {
   const [selected, setSelected] = useState<AgendaEvent | null>(null);
+  const [activeCat, setActiveCat] = useState<CatFilter>("all");
   const open = useCallback((e: AgendaEvent) => setSelected(e), []);
   const close = useCallback(() => setSelected(null), []);
 
-  const featured = events.find((e) => e.featured) ?? events[0];
-  const rest = events.filter((e) => e.id !== featured?.id);
+  // 2 eventos más próximos por categoría (para el hero)
+  const top2ByCat = useCallback((cat: AgendaCategory) =>
+    events
+      .filter((e) => e.category === cat)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, 2),
+    [events]);
 
-  const byCat = (cat: AgendaCategory) => rest.filter((e) => e.category === cat);
+  const heroByCat: Record<AgendaCategory, AgendaEvent[]> = {
+    cultural: top2ByCat("cultural"),
+    turistico: top2ByCat("turistico"),
+    deportivo: top2ByCat("deportivo"),
+  };
+
+  // Hero respeta el filtro: "all" = 6 (2 de cada cat), específica = 2 de esa cat
+  const heroEvents =
+    activeCat === "all"
+      ? [...heroByCat.cultural, ...heroByCat.turistico, ...heroByCat.deportivo]
+      : heroByCat[activeCat];
+
+  // Categorías a mostrar en el grid: todas o solo la filtrada
+  const catsToShow = activeCat === "all" ? CAT_ORDER : [activeCat];
 
   // Próximos 7 días = ordenado por date ascendente, top 5
   const upcoming = [...events].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+
+  // Mes dinámico del header (mes del primer evento próximo)
+  const firstDate = events[0]?.date;
+  const monthLabel = firstDate
+    ? `${MONTHS_ES[new Date(firstDate + "T00:00:00").getMonth()]} ${new Date(firstDate + "T00:00:00").getFullYear()}`
+    : "";
+
+  const filterButtons: { label: string; value: CatFilter; cat?: AgendaCategory }[] = [
+    { label: "Todas", value: "all" },
+    { label: "Cultural", value: "cultural", cat: "cultural" },
+    { label: "Turístico", value: "turistico", cat: "turistico" },
+    { label: "Deportivo", value: "deportivo", cat: "deportivo" },
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-4">
@@ -358,37 +471,49 @@ export default function AgendaLayout({
       {/* Filters */}
       <AnimateIn direction="up" delay={0.05}>
         <div className="flex gap-2 mb-7 flex-wrap items-center">
-          <button className="text-[11px] uppercase tracking-[0.14em] font-semibold px-3.5 py-1.5 border-2 border-ink bg-ink text-paper font-[family-name:var(--font-heading)]">
-            Todas
-          </button>
-          <button className="text-[11px] uppercase tracking-[0.14em] font-semibold px-3.5 py-1.5 border-2 border-ink bg-paper text-ink font-[family-name:var(--font-heading)] hover:bg-cat-cultural hover:text-white hover:border-cat-cultural transition-colors">
-            Cultural
-          </button>
-          <button className="text-[11px] uppercase tracking-[0.14em] font-semibold px-3.5 py-1.5 border-2 border-ink bg-paper text-ink font-[family-name:var(--font-heading)] hover:bg-cat-turistico hover:text-white hover:border-cat-turistico transition-colors">
-            Turístico
-          </button>
-          <button className="text-[11px] uppercase tracking-[0.14em] font-semibold px-3.5 py-1.5 border-2 border-ink bg-paper text-ink font-[family-name:var(--font-heading)] hover:bg-cat-deportivo hover:text-white hover:border-cat-deportivo transition-colors">
-            Deportivo
-          </button>
+          {filterButtons.map((btn) => {
+            const isActive = activeCat === btn.value;
+            const hoverBg = btn.cat ? `hover:bg-cat-${btn.cat}` : "hover:bg-ink/80";
+            const hoverText = btn.cat ? "hover:text-white" : "hover:text-paper";
+            const hoverBorder = btn.cat ? `hover:border-cat-${btn.cat}` : "";
+            return (
+              <button
+                key={btn.value}
+                onClick={() => setActiveCat(btn.value)}
+                className={`text-[11px] uppercase tracking-[0.14em] font-semibold px-3.5 py-1.5 border-2 border-ink font-[family-name:var(--font-heading)] transition-colors ${
+                  isActive
+                    ? "bg-ink text-paper"
+                    : `bg-paper text-ink ${hoverBg} ${hoverText} ${hoverBorder}`
+                }`}
+              >
+                {btn.label}
+              </button>
+            );
+          })}
           <span className="ml-auto text-[11px] uppercase tracking-[0.14em] text-muted font-[family-name:var(--font-heading)]">
-            Julio 2026 · {events.length} eventos
+            {monthLabel} · {events.length} eventos
           </span>
         </div>
       </AnimateIn>
 
-      {/* Hero featured */}
-      {featured && (
+      {/* Hero slider — 6 eventos (2 por cat), rota cada 10s, respeta filtro */}
+      {heroEvents.length > 0 && (
         <AnimateIn direction="up" delay={0.1}>
-          <HeroEvent e={featured} onOpen={open} />
+          <HeroSlider events={heroEvents} onOpen={open} />
         </AnimateIn>
       )}
 
       {/* Grid: 3 contenido + 1 sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3">
-          <CategorySection category="cultural" events={byCat("cultural")} onOpen={open} />
-          <CategorySection category="turistico" events={byCat("turistico")} onOpen={open} />
-          <CategorySection category="deportivo" events={byCat("deportivo")} onOpen={open} />
+          {catsToShow.map((cat) => (
+            <CategorySection
+              key={cat}
+              category={cat}
+              events={events.filter((e) => e.category === cat)}
+              onOpen={open}
+            />
+          ))}
 
           <div className="text-center mt-6">
             <Link href="/agenda/submit" className="inline-flex items-center gap-2 bg-agenda text-white font-[family-name:var(--font-heading)] uppercase tracking-[0.14em] font-semibold text-xs px-4 py-2.5 border-2 border-ink shadow-hard-sm hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-hard transition-all">
