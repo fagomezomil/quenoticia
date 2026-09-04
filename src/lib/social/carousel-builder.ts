@@ -3,6 +3,7 @@ import { selectNotesForCarousel, selectNotesForStories, type SelectedNote } from
 import { generateSlidePng, generateStoryPng } from "./generate-slide";
 import { buildCaption } from "./caption-builder";
 import type { Section } from "@/lib/types";
+import { r2Upload } from "@/lib/r2";
 
 // Concurrency de generación de PNGs — satori/resvg son CPU-intensivos. VPS 4 vCPU,
 // 10 PNGs en paralelo saturan. Limitamos a 3 para no matar la app.
@@ -90,21 +91,16 @@ function formatDateLabel(iso: string): string {
   }
 }
 
-/** Sube un PNG al bucket `media` con path `social/{timestamp}-{section}.png`
+/** Sube un PNG a R2 con path `social/{timestamp}-{section}.png`
  *  y devuelve la URL pública. */
 async function uploadSlidePng(png: Buffer, section: string, timestamp: number): Promise<string> {
-  const admin = await getSupabaseAdmin();
   const path = `social/${timestamp}-${section}.png`;
-  const { error } = await admin.storage.from("media").upload(path, png, {
-    contentType: "image/png",
-    upsert: true,
-  });
-  if (error) throw new Error(`upload slide ${path}: ${error.message}`);
-  const { data } = admin.storage.from("media").getPublicUrl(path);
-  return data.publicUrl;
+  const uploaded = await r2Upload("media", path, png, "image/png");
+  if (!uploaded) throw new Error(`upload slide ${path} failed`);
+  return uploaded;
 }
 
-/** Sube el PNG del story 9:16 al bucket `media` con path `social/stories-{timestamp}-{section}-{n}.png`
+/** Sube el PNG del story 9:16 a R2 con path `social/stories-{timestamp}-{section}-{n}.png`
  *  y devuelve la URL pública. Se publica directo como imagen de story IG/FB (sin MP4). */
 async function uploadStoryPosterPng(
   png: Buffer,
@@ -112,15 +108,10 @@ async function uploadStoryPosterPng(
   n: number,
   timestamp: number,
 ): Promise<string> {
-  const admin = await getSupabaseAdmin();
   const path = `social/stories-${timestamp}-${section}-${n}.png`;
-  const { error } = await admin.storage.from("media").upload(path, png, {
-    contentType: "image/png",
-    upsert: true,
-  });
-  if (error) throw new Error(`upload story poster ${path}: ${error.message}`);
-  const { data } = admin.storage.from("media").getPublicUrl(path);
-  return data.publicUrl;
+  const uploaded = await r2Upload("media", path, png, "image/png");
+  if (!uploaded) throw new Error(`upload story poster ${path} failed`);
+  return uploaded;
 }
 
 /** Run async tasks with bounded concurrency (para no saturar CPU con 10 ffmpeg en paralelo). */

@@ -8,6 +8,7 @@ import { bufferPublish, bufferPublishStories } from "@/lib/social/buffer-client"
 import { AGENDA_COLORS, AGENDA_LABELS } from "@/lib/social/slide-template";
 import { buildEventCaption } from "@/lib/social/caption-builder";
 import type { ChannelTarget } from "@/lib/social/daily-limits";
+import { r2Upload } from "@/lib/r2";
 
 /** Reintento manual: regenera los slides del post y republica via Buffer.
  *  Conserva el article_ids original del registro. */
@@ -65,13 +66,9 @@ export async function retrySocialPost(postId: string) {
         sourceLabel: note.author ?? undefined,
       });
       const path = `social/retry-${timestamp}-${note.section}.png`;
-      const { error: upErr } = await admin.storage.from("media").upload(path, png, {
-        contentType: "image/png",
-        upsert: true,
-      });
-      if (upErr) throw new Error(`upload: ${upErr.message}`);
-      const { data: urlData } = admin.storage.from("media").getPublicUrl(path);
-      slideUrls.push(urlData.publicUrl);
+      const uploaded = await r2Upload("media", path, png, "image/png");
+      if (!uploaded) throw new Error("upload R2 failed");
+      slideUrls.push(uploaded);
     } catch (err) {
       console.error(`retry slide ${note.section}:`, err);
     }
@@ -258,13 +255,9 @@ export async function publishArticle(
       sourceLabel: article.author ?? undefined,
     });
     const path = `social/manual-${Date.now()}-${article.section}.png`;
-    const { error: upErr } = await admin.storage.from("media").upload(path, png, {
-      contentType: "image/png",
-      upsert: true,
-    });
-    if (upErr) throw new Error(`upload: ${upErr.message}`);
-    const { data: urlData } = admin.storage.from("media").getPublicUrl(path);
-    slideUrl = urlData.publicUrl;
+    const uploaded = await r2Upload("media", path, png, "image/png");
+    if (!uploaded) throw new Error("upload R2 failed");
+    slideUrl = uploaded;
   } catch (err) {
     console.error("publishArticle slide:", err);
     return { success: false, error: `No se pudo generar el slide: ${String(err)}` };
@@ -374,13 +367,9 @@ export async function publishEvent(
       venue: event.venue_name ?? undefined,
     });
     const path = `social/event-${Date.now()}-${event.category}.png`;
-    const { error: upErr } = await admin.storage.from("media").upload(path, png, {
-      contentType: "image/png",
-      upsert: true,
-    });
-    if (upErr) throw new Error(`upload: ${upErr.message}`);
-    const { data: urlData } = admin.storage.from("media").getPublicUrl(path);
-    slideUrl = urlData.publicUrl;
+    const uploaded = await r2Upload("media", path, png, "image/png");
+    if (!uploaded) throw new Error("upload R2 failed");
+    slideUrl = uploaded;
   } catch (err) {
     console.error("publishEvent slide:", err);
     return { success: false, error: `No se pudo generar el slide: ${String(err)}` };

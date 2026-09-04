@@ -2,6 +2,7 @@
 
 import { createClient, requireAdminAction } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { r2Upload } from "@/lib/r2";
 
 export async function toggleAdActive(adId: string, currentActive: boolean) {
   try {
@@ -51,10 +52,10 @@ export async function saveAd(prevState: { error: string } | null, formData: Form
     }
     const ext = imageFile.name.split(".").pop();
     const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from("media").upload(path, imageFile, { upsert: true });
-    if (uploadError) return { error: "Error al subir imagen: " + uploadError.message };
-    const { data: urlData } = supabase.storage.from("media").getPublicUrl(path);
-    imageUrl = urlData.publicUrl;
+    const buffer = Buffer.from(await imageFile.arrayBuffer());
+    const uploaded = await r2Upload("media", path, buffer, imageFile.type);
+    if (!uploaded) return { error: "Error al subir imagen a R2." };
+    imageUrl = uploaded;
   } else if (isEditing) {
     imageUrl = formData.get("existing_image_url") as string | null;
   }
@@ -70,10 +71,10 @@ export async function saveAd(prevState: { error: string } | null, formData: Form
     }
     const ext = mobileFile.name.split(".").pop();
     const path = `${Date.now()}-mobile-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from("media").upload(path, mobileFile, { upsert: true });
-    if (uploadError) return { error: "Error al subir imagen mobile: " + uploadError.message };
-    const { data: urlData } = supabase.storage.from("media").getPublicUrl(path);
-    mobileImageUrl = urlData.publicUrl;
+    const buffer = Buffer.from(await mobileFile.arrayBuffer());
+    const uploaded = await r2Upload("media", path, buffer, mobileFile.type);
+    if (!uploaded) return { error: "Error al subir imagen mobile a R2." };
+    mobileImageUrl = uploaded;
   } else if (isEditing) {
     mobileImageUrl = formData.get("existing_mobile_image_url") as string | null;
   }

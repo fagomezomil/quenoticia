@@ -2,6 +2,7 @@
 
 import { createClient, requireEditorAction } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { r2Upload } from "@/lib/r2";
 
 interface SponsoredPayload {
   id?: string;
@@ -106,14 +107,11 @@ export async function uploadSponsoredImage(formData: FormData) {
   const ext = file.name.split(".").pop();
   const path = `sponsored/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-  const { error: uploadError } = await supabase.storage
-    .from("articles")
-    .upload(path, file, { upsert: true });
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const publicUrl = await r2Upload("articles", path, buffer, file.type);
 
-  if (uploadError) {
-    return { error: uploadError.message, url: null };
+  if (!publicUrl) {
+    return { error: "Error al subir imagen a R2.", url: null };
   }
-
-  const { data: urlData } = supabase.storage.from("articles").getPublicUrl(path);
-  return { error: null, url: urlData.publicUrl };
+  return { error: null, url: publicUrl };
 }
