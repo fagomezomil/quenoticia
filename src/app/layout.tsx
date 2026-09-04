@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Oswald, Inter } from "next/font/google";
 import AuthProvider from "@/components/providers/AuthProvider";
+import BackToTop from "@/components/BackToTop";
 import JsonLd from "@/components/JsonLd";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import {
@@ -114,7 +115,10 @@ export default function RootLayout({
         <JsonLd data={organizationLd} />
         <JsonLd data={websiteLd} />
         <GoogleAnalytics />
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <BackToTop />
+        </AuthProvider>
       </body>
     </html>
   );

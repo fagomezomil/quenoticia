@@ -26,7 +26,10 @@ import { getActiveColumnists } from "@/lib/columnists";
 import WeatherStrip from "@/components/WeatherStrip";
 import OpinionBlock from "@/components/OpinionBlock";
 import AgendaCarousel from "@/components/AgendaCarousel";
+import MatchCard from "@/components/MatchCard";
 import { getActiveEvents } from "@/lib/agenda";
+import { getSportsMatches } from "@/lib/sports";
+import type { SportsMatch } from "@/lib/types";
 
 function sponsoredToArticle(s: SponsoredContent): Article {
   return {
@@ -48,7 +51,7 @@ function sponsoredToArticle(s: SponsoredContent): Article {
 export const revalidate = 60;
 
 export default async function Home() {
-  const [breakingData, sectionData, ads, customArticles, sponsoredContent, weather, columnists, portadaFeatured, events] = await Promise.all([
+  const [breakingData, sectionData, ads, customArticles, sponsoredContent, weather, columnists, portadaFeatured, events, matches] = await Promise.all([
     fetchBreakingNews(),
     fetchHomepageArticles(),
     getActiveAds(),
@@ -58,6 +61,7 @@ export default async function Home() {
     getActiveColumnists(),
     getPortadaFeatured(),
     getActiveEvents(),
+    getSportsMatches("futbol"),
   ]);
 
   const leaderboardAds = ads.filter((a) => a.type === "leaderboard");
@@ -120,6 +124,22 @@ export default async function Home() {
     ...events.filter((e) => e.category === "turistico").sort((a, b) => a.date.localeCompare(b.date)).slice(0, 2),
     ...events.filter((e) => e.category === "deportivo").sort((a, b) => a.date.localeCompare(b.date)).slice(0, 1),
   ];
+
+  // Próximos partidos de Boca, River y Atlético Tucumán (1 por equipo, el más próximo)
+  const featuredTeams = ["Boca Juniors", "River Plate", "Atlético Tucumán"];
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const featuredMatches: SportsMatch[] = featuredTeams
+    .map((team) =>
+      matches
+        .filter(
+          (m) =>
+            (m.home_team === team || m.away_team === team) &&
+            (m.status === "scheduled" || m.status === "live") &&
+            m.match_date >= todayIso,
+        )
+        .sort((a, b) => a.match_date.localeCompare(b.match_date))[0],
+    )
+    .filter((m): m is SportsMatch => Boolean(m));
 
   return (
     <>
@@ -209,8 +229,8 @@ export default async function Home() {
                 </div>
               </section>
 
-              {/* Opinion block after Política (index 0) — 4 cards with columnist avatars */}
-              {index === 0 && sectionArticles.opinion && sectionArticles.opinion.length > 0 && (
+              {/* Opinion block after Tucumán (index 1) — arriba de Deportes, 4 cards con avatares */}
+              {index === 1 && sectionArticles.opinion && sectionArticles.opinion.length > 0 && (
                 <AnimateIn direction="up" delay={0.1}>
                   <OpinionBlock articles={sectionArticles.opinion} columnists={columnists} />
                 </AnimateIn>
@@ -227,6 +247,41 @@ export default async function Home() {
                     <div className="hidden lg:block">
                       <AdRotator ads={rectangleAds} size="rectangle" />
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Próximos partidos Boca/River/Atlético Tucumán + CTA al fixture */}
+              {index === 2 && featuredMatches.length > 0 && (
+                <div className="mt-4 mb-10">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {featuredMatches.map((m) => (
+                      <MatchCard key={m.id} match={m} variant="card" />
+                    ))}
+                    <Link
+                      href="/deportes/futbol"
+                      className="relative border-2 border-ink bg-deportes text-white shadow-hard-sm p-4 flex flex-col justify-between hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-hard transition-all"
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-[10px] uppercase tracking-[0.14em] font-bold bg-ink px-2 py-1 font-[family-name:var(--font-heading)]">
+                          Liga Profesional
+                        </span>
+                      </div>
+                      <div>
+                        <p
+                          className="text-2xl font-bold font-[family-name:var(--font-heading)] leading-[1.05] tracking-tight mb-2"
+                          style={{ textTransform: "none" }}
+                        >
+                          La info del campeonato está acá
+                        </p>
+                        <p className="text-[11px] uppercase tracking-[0.14em] font-semibold opacity-90 font-[family-name:var(--font-heading)] flex items-center gap-1.5">
+                          Ver fixture y tabla
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                          </svg>
+                        </p>
+                      </div>
+                    </Link>
                   </div>
                 </div>
               )}
