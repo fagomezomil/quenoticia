@@ -184,7 +184,7 @@ export async function rejectEnhancedArticle(id: string) {
       title: art.original_title,
       body: art.original_body,
       volanta: null,
-      excerpt: null,
+      excerpt: "",
       original_body: null,
       original_title: null,
       enhanced_at: null,
