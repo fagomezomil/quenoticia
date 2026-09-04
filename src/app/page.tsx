@@ -12,7 +12,7 @@ import Footer from "@/components/Footer";
 import AnimateIn from "@/components/animate/AnimateIn";
 import HeroEditorial from "@/components/HeroEditorial";
 import { sectionConfig } from "@/lib/types";
-import type { Section, Article, SponsoredContent } from "@/lib/types";
+import type { Section, Article, SponsoredContent, AgendaEvent } from "@/lib/types";
 import { articles as seedArticles, getArticlesBySection } from "@/lib/data";
 import {
   fetchBreakingNews,
@@ -25,6 +25,8 @@ import { fetchCurrentWeather } from "@/lib/weather";
 import { getActiveColumnists } from "@/lib/columnists";
 import WeatherStrip from "@/components/WeatherStrip";
 import OpinionBlock from "@/components/OpinionBlock";
+import AgendaCarousel from "@/components/AgendaCarousel";
+import { getActiveEvents } from "@/lib/agenda";
 
 function sponsoredToArticle(s: SponsoredContent): Article {
   return {
@@ -46,7 +48,7 @@ function sponsoredToArticle(s: SponsoredContent): Article {
 export const revalidate = 60;
 
 export default async function Home() {
-  const [breakingData, sectionData, ads, customArticles, sponsoredContent, weather, columnists, portadaFeatured] = await Promise.all([
+  const [breakingData, sectionData, ads, customArticles, sponsoredContent, weather, columnists, portadaFeatured, events] = await Promise.all([
     fetchBreakingNews(),
     fetchHomepageArticles(),
     getActiveAds(),
@@ -55,6 +57,7 @@ export default async function Home() {
     fetchCurrentWeather(),
     getActiveColumnists(),
     getPortadaFeatured(),
+    getActiveEvents(),
   ]);
 
   const leaderboardAds = ads.filter((a) => a.type === "leaderboard");
@@ -111,6 +114,13 @@ export default async function Home() {
   // Urgente articles from all sections (cross-section)
   const urgentArticles = allArticles.filter((a) => a.layout === "urgente");
 
+  // Agenda hero en portada: 2 cultural + 2 turístico + 1 deportivo (top por fecha)
+  const agendaHeroEvents: AgendaEvent[] = [
+    ...events.filter((e) => e.category === "cultural").sort((a, b) => a.date.localeCompare(b.date)).slice(0, 2),
+    ...events.filter((e) => e.category === "turistico").sort((a, b) => a.date.localeCompare(b.date)).slice(0, 2),
+    ...events.filter((e) => e.category === "deportivo").sort((a, b) => a.date.localeCompare(b.date)).slice(0, 1),
+  ];
+
   return (
     <>
       <Header />
@@ -144,12 +154,12 @@ export default async function Home() {
         </AnimateIn>
 
         {/* Section grids — opinion is rendered separately as a 4-card block */}
-        {Object.entries(sectionConfig)
-          .filter(([key]) => key !== "opinion")
-          .map(([key, cfg], index) => {
-          const sArticles = sectionArticles[key as Section];
+        {(["politica", "tucuman", "deportes", "economia", "internacionales"] as Section[])
+          .map((key, index) => {
+          const cfg = sectionConfig[key];
+          const sArticles = sectionArticles[key];
           if (!sArticles || sArticles.length === 0) return null;
-          const sponsoredItem = sponsoredPerSection[key as Section];
+          const sponsoredItem = sponsoredPerSection[key];
 
           // First article is featured (larger), rest are standard
           const featured = sArticles[0];
@@ -221,11 +231,38 @@ export default async function Home() {
                 </div>
               )}
 
-              {/* Weather strip after Economia (index 2) */}
+              {/* Weather strip after Deportes (index 2) */}
               {index === 2 && (
                 <div className="mb-10">
                   <WeatherStrip weather={weather} />
                 </div>
+              )}
+
+              {/* Agenda block after Economia (index 3) — carrusel horizontal con CTA */}
+              {index === 3 && agendaHeroEvents.length > 0 && (
+                <AnimateIn direction="up" delay={0.1}>
+                  <section className="mb-10">
+                    <div
+                      className="border-t-2 pt-2 mb-4 flex items-center justify-between"
+                      style={{ borderTopColor: "var(--color-agenda)" }}
+                    >
+                      <h2
+                        className="text-sm font-bold tracking-widest uppercase font-[family-name:var(--font-heading)]"
+                        style={{ color: "var(--color-agenda)" }}
+                      >
+                        Agenda
+                      </h2>
+                      <Link
+                        href="/agenda"
+                        className="text-xs font-semibold hover:underline"
+                        style={{ color: "var(--color-agenda)" }}
+                      >
+                        +Agenda
+                      </Link>
+                    </div>
+                    <AgendaCarousel events={agendaHeroEvents} />
+                  </section>
+                </AnimateIn>
               )}
             </AnimateIn>
           );

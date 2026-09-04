@@ -92,6 +92,15 @@ h6 {
   border-top: 1px solid var(--color-ink);
 }
 
+/* Hide scrollbar for horizontal carousels (webkit + firefox) */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Section color accents */
 .section-politica { border-top-color: var(--color-politica); }
 .section-deportes { border-top-color: var(--color-deportes); }
