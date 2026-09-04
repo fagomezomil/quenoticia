@@ -24,9 +24,10 @@ interface ArticleFormProps {
   article?: CustomArticle;
   columnists?: Columnist[];
   defaultSection?: Section;
+  featuredCount?: number;
 }
 
-export default function ArticleForm({ article, columnists = [], defaultSection }: ArticleFormProps) {
+export default function ArticleForm({ article, columnists = [], defaultSection, featuredCount }: ArticleFormProps) {
   const router = useRouter();
   const isEditing = !!article;
 
@@ -350,7 +351,7 @@ export default function ArticleForm({ article, columnists = [], defaultSection }
         <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
           Presentación en la sección
         </label>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={() => setLayout("normal")}
@@ -362,18 +363,6 @@ export default function ArticleForm({ article, columnists = [], defaultSection }
           >
             <span className="block text-xs font-bold uppercase tracking-wider mb-1">Normal</span>
             <span className="block text-[10px] text-muted">1 columna</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setLayout("destacada")}
-            className={`p-3 rounded border-2 text-center transition-all ${
-              layout === "destacada"
-                ? "border-[#3b82f6] bg-[#3b82f6]/5"
-                : "border-border bg-white hover:border-[#3b82f6]/30"
-            }`}
-          >
-            <span className="block text-xs font-bold uppercase tracking-wider mb-1 text-[#3b82f6]">Destacada</span>
-            <span className="block text-[10px] text-muted">2 columnas</span>
           </button>
           <button
             type="button"
@@ -416,8 +405,13 @@ export default function ArticleForm({ article, columnists = [], defaultSection }
             onChange={(e) => setFeatured(e.target.checked)}
             className="w-4 h-4 accent-[#f97316]"
           />
-          <span className="text-sm font-semibold">Destacada en slide del header</span>
+          <span className="text-sm font-semibold">Destacada (hero + header + sección)</span>
         </label>
+        {featuredCount !== undefined && featuredCount > 0 && (
+          <p className="text-[10px] text-muted w-full">
+            {featuredCount} destacada{featuredCount === 1 ? "" : "s"} activa{featuredCount === 1 ? "" : "s"} · se muestran las 5 más nuevas
+          </p>
+        )}
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"

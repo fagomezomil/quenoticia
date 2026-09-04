@@ -4,7 +4,7 @@ import WeatherBadge from "@/components/WeatherBadge";
 import SocialLinks from "@/components/SocialLinks";
 import HeaderFeaturedSlide from "@/components/HeaderFeaturedSlide";
 import { fetchCurrentWeather, TUCUMAN_NAME } from "@/lib/weather";
-import { getFeaturedArticles, getActiveArticles } from "@/lib/articles";
+import { getPortadaFeatured } from "@/lib/articles";
 
 export default async function Header() {
   const today = new Date().toLocaleDateString("es-ES", {
@@ -14,16 +14,15 @@ export default async function Header() {
     day: "numeric",
   });
 
-  const [weather, featuredRaw] = await Promise.all([
+  const [weather, portadaFeatured] = await Promise.all([
     fetchCurrentWeather(),
-    getFeaturedArticles(6),
+    getPortadaFeatured(),
   ]);
 
-  // Fallback: si la redacción no marcó ninguna destacada, usar las últimas publicadas.
-  const isFallback = featuredRaw.length === 0;
-  const featured = isFallback
-    ? await getActiveArticles().then((all) => all.slice(0, 6))
-    : featuredRaw;
+  // Header slide: 1 por sección (excluida opinion), priorizando featured,
+  // sin duplicar las del heroeditorial de la portada. Cacheado a 60s.
+  const featured = portadaFeatured.headerSlide;
+  const isFallback = false; // El helper ya maneja fallback internamente.
 
   return (
     <header className="bg-white text-white relative z-50" style={{ overflow: "visible" }}>
@@ -72,7 +71,7 @@ export default async function Header() {
           <div className="flex-1 min-w-0">
             <HeaderFeaturedSlide
               articles={featured}
-              title={isFallback ? "Últimas noticias" : "Destacadas por la redacción"}
+              title="Destacadas"
             />
           </div>
         </div>

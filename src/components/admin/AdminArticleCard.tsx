@@ -13,7 +13,6 @@ interface AdminArticleCardProps {
 
 const LAYOUT_LABELS: Record<string, { label: string; color: string }> = {
   urgente: { label: "URGENTE", color: "#c8102e" },
-  destacada: { label: "DESTACADA", color: "#3b82f6" },
   normal: { label: "Normal", color: "#6b6b6b" },
 };
 
@@ -62,6 +61,14 @@ export default function AdminArticleCard({ article, editHref }: AdminArticleCard
             >
               {layoutInfo.label}
             </span>
+            {article.featured && (
+              <span
+                className="text-[10px] font-bold tracking-wide uppercase px-1.5 py-0.5 rounded"
+                style={{ backgroundColor: `${"#f97316"}20`, color: "#f97316" }}
+              >
+                DESTACADA
+              </span>
+            )}
           </div>
 
           <Link href={editUrl} className="block group-hover:underline">

@@ -1,5 +1,7 @@
 import { createClient, createPublicClient } from "@/lib/supabase/server";
 import type { Section, ArticleLayout, CustomArticle, Comment } from "@/lib/types";
+import { sectionConfig } from "@/lib/types";
+import { unstable_cache } from "next/cache";
 
 function mapRowToArticle(row: Record<string, unknown>): CustomArticle {
   return {
@@ -198,5 +200,103 @@ export async function getCommentCounts(articleIds: string[]): Promise<Record<str
     return counts;
   } catch {
     return {};
+  }
+}
+
+/* ────────── Helpers de destacadas para portada + header ──────────
+
+   Un solo cached call computa los 3 conjuntos que comparten portada y Header:
+   - heroEditorial: hasta 5, featured primero; si hay 1-4 featured, completa con
+     las más nuevas por sección (excluyendo secciones ya representadas). Si 0,
+     las más nuevas por sección (comportamiento previo al refactor).
+   - headerSlide: 1 por sección (excluida opinion), priorizando featured, excluyendo
+     los IDs del heroEditorial (sin duplicar). Si la featured de una sección está en
+     el heroEditorial, toma la siguiente más nueva.
+   - secondary: las 6 más nuevas que NO son featured ni están en heroEditorial ni
+     headerSlide. Estas se excluyen de los section grids de la portada (evitar duplicar).
+
+   Cache revalidate 60s — mismo TTL que `export const revalidate = 60` de la portada.
+*/
+
+const PORTADA_SECTIONS = (Object.keys(sectionConfig) as Section[]).filter(
+  (k) => k !== "opinion",
+);
+
+async function _getPortadaFeatured(): Promise<{
+  heroEditorial: CustomArticle[];
+  headerSlide: CustomArticle[];
+  secondary: CustomArticle[];
+}> {
+  const allActive = await getActiveArticles();
+
+  // --- heroEditorial ---
+  const featuredAll = allActive.filter((a) => a.featured);
+  const heroEditorial: CustomArticle[] = [];
+  const heroIds = new Set<string>();
+  const heroSections = new Set<string>();
+
+  for (const a of featuredAll) {
+    if (heroEditorial.length >= 5) break;
+    heroEditorial.push(a);
+    heroIds.add(a.id);
+    heroSections.add(a.section);
+  }
+
+  // Completar con más nuevas por sección (excluyendo secciones ya representadas)
+  for (const key of PORTADA_SECTIONS) {
+    if (heroEditorial.length >= 5) break;
+    if (heroSections.has(key)) continue;
+    const next = allActive.find((a) => a.section === key && !heroIds.has(a.id));
+    if (next) {
+      heroEditorial.push(next);
+      heroIds.add(next.id);
+      heroSections.add(next.section);
+    }
+  }
+
+  // --- headerSlide: 1 por sección, priorizar featured, excluir heroEditorial ---
+  const headerSlide: CustomArticle[] = [];
+  const headerIds = new Set(heroIds);
+  for (const key of PORTADA_SECTIONS) {
+    if (headerSlide.length >= 5) break;
+    const feat = allActive.find(
+      (a) => a.section === key && a.featured && !headerIds.has(a.id),
+    );
+    const pick =
+      feat ??
+      allActive.find((a) => a.section === key && !headerIds.has(a.id));
+    if (pick) {
+      headerSlide.push(pick);
+      headerIds.add(pick.id);
+    }
+  }
+
+  // --- secondary: 6 más nuevas que NO son featured ni están en heroEditorial/headerSlide ni son urgente ---
+  const secondary = allActive
+    .filter((a) => !a.featured && !headerIds.has(a.id) && a.layout !== "urgente")
+    .slice(0, 6);
+
+  return { heroEditorial, headerSlide, secondary };
+}
+
+export const getPortadaFeatured = unstable_cache(
+  _getPortadaFeatured,
+  ["portada-featured-v1"],
+  { revalidate: 60 },
+);
+
+/** Count de featured activas — para el indicador del admin. */
+export async function getFeaturedCount(): Promise<number> {
+  try {
+    const supabase = createPublicClient();
+    const { count, error } = await supabase
+      .from("articles")
+      .select("id", { count: "exact", head: true })
+      .eq("active", true)
+      .eq("featured", true);
+    if (error || count === null) return 0;
+    return count;
+  } catch {
+    return 0;
   }
 }

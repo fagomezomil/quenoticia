@@ -3,6 +3,7 @@ import AdminSiteLayout from "@/components/admin/AdminSiteLayout";
 import ArticleForm from "@/components/admin/ArticleForm";
 import Link from "next/link";
 import { getActiveColumnists } from "@/lib/columnists";
+import { getFeaturedCount } from "@/lib/articles";
 import type { Section } from "@/lib/types";
 
 interface NewArticlePageProps {
@@ -21,6 +22,7 @@ export default async function NewArticlePage({ searchParams }: NewArticlePagePro
   const backLabel = ref === "opinion" ? "Volver a Notas de Opinión" : "Volver a Notas";
 
   const columnists = await getActiveColumnists();
+  const featuredCount = await getFeaturedCount();
 
   return (
     <AdminSiteLayout role={profile.role} email={user.email!}>
@@ -33,7 +35,7 @@ export default async function NewArticlePage({ searchParams }: NewArticlePagePro
       <h2 className="text-lg font-bold mb-6">
         {defaultSection === "opinion" ? "Nueva Nota de Opinión" : "Nueva Nota"}
       </h2>
-      <ArticleForm columnists={columnists} defaultSection={defaultSection} />
+      <ArticleForm columnists={columnists} defaultSection={defaultSection} featuredCount={featuredCount} />
     </AdminSiteLayout>
   );
 }

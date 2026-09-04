@@ -44,10 +44,14 @@ export default function SectionPageLayout({
 }: SectionPageLayoutProps) {
   const cfg = sectionConfig[section];
 
-  // Sort: urgente first, then destacada, then normal
+  // Sort: urgente first, then featured, then normal — after that by recency (already sorted by sort_date from query).
   const sorted = [...articles].sort((a, b) => {
-    const order: Record<string, number> = { urgente: 0, destacada: 1, normal: 2 };
-    return (order[a.layout || "normal"] ?? 2) - (order[b.layout || "normal"] ?? 2);
+    const order = (a: Article): number => {
+      if (a.layout === "urgente") return 0;
+      if (a.featured) return 1;
+      return 2;
+    };
+    return order(a) - order(b);
   });
 
   // Urgente articles — full-width above grid, only on page 1

@@ -2,7 +2,7 @@ import { requireEditor } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import AdminSiteLayout from "@/components/admin/AdminSiteLayout";
 import ArticleForm from "@/components/admin/ArticleForm";
-import { getArticleById } from "@/lib/articles";
+import { getArticleById, getFeaturedCount } from "@/lib/articles";
 import { getActiveColumnists } from "@/lib/columnists";
 import Link from "next/link";
 
@@ -23,6 +23,7 @@ export default async function EditArticlePage({ params, searchParams }: EditArti
   const backHref = sp.ref === "opinion" || article.section === "opinion" ? "/admin/opinion" : "/admin/articles";
   const backLabel = sp.ref === "opinion" || article.section === "opinion" ? "Volver a Notas de Opinión" : "Volver a Notas";
   const columnists = await getActiveColumnists();
+  const featuredCount = await getFeaturedCount();
 
   return (
     <AdminSiteLayout role={profile.role} email={user.email!}>
@@ -35,7 +36,7 @@ export default async function EditArticlePage({ params, searchParams }: EditArti
       <h2 className="text-lg font-bold mb-6">
         {article.section === "opinion" ? "Editar Nota de Opinión" : "Editar Nota"}
       </h2>
-      <ArticleForm article={article} columnists={columnists} />
+      <ArticleForm article={article} columnists={columnists} featuredCount={featuredCount} />
     </AdminSiteLayout>
   );
 }

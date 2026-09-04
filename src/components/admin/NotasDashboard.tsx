@@ -29,7 +29,7 @@ export default function NotasDashboard({ articles }: NotasDashboardProps) {
   const layoutFilters = [
     { label: "Todos los formatos", value: "all" },
     { label: "Urgente", value: "urgente" },
-    { label: "Destacada", value: "destacada" },
+    { label: "Destacada", value: "featured" },
     { label: "Normal", value: "normal" },
   ];
 
@@ -51,7 +51,13 @@ export default function NotasDashboard({ articles }: NotasDashboardProps) {
 
     return articles.filter((article) => {
       if (activeFilter !== "all" && article.section !== activeFilter) return false;
-      if (layoutFilter !== "all" && (article.layout || "normal") !== layoutFilter) return false;
+      if (layoutFilter !== "all") {
+        if (layoutFilter === "featured") {
+          if (!article.featured) return false;
+        } else if ((article.layout || "normal") !== layoutFilter) {
+          return false;
+        }
+      }
       if (dateFilter !== "all") {
         const ts = article.sortDate || article.created_at;
         if (!ts) return false;

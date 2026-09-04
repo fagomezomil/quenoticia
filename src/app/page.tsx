@@ -21,7 +21,7 @@ import {
   fetchHomepageArticles,
 } from "@/lib/api";
 import { getActiveAds, pickAd } from "@/lib/ads";
-import { getActiveArticles } from "@/lib/articles";
+import { getActiveArticles, getPortadaFeatured } from "@/lib/articles";
 import { getActiveSponsored } from "@/lib/sponsored";
 import { fetchCurrentWeather } from "@/lib/weather";
 import { getActiveColumnists } from "@/lib/columnists";
@@ -48,7 +48,7 @@ function sponsoredToArticle(s: SponsoredContent): Article {
 export const revalidate = 60;
 
 export default async function Home() {
-  const [breakingData, sectionData, ads, customArticles, sponsoredContent, weather, columnists] = await Promise.all([
+  const [breakingData, sectionData, ads, customArticles, sponsoredContent, weather, columnists, portadaFeatured] = await Promise.all([
     fetchBreakingNews(),
     fetchHomepageArticles(),
     getActiveAds(),
@@ -56,6 +56,7 @@ export default async function Home() {
     getActiveSponsored(undefined, true),
     fetchCurrentWeather(),
     getActiveColumnists(),
+    getPortadaFeatured(),
   ]);
 
   const leaderboardAds = ads.filter((a) => a.type === "leaderboard");
@@ -97,16 +98,17 @@ export default async function Home() {
 
   // Flatten all articles for hero/sidebar logic
   const allArticles = Object.values(sectionArticles).flat();
-  // Pick 1 article per section for the hero slider — opinion excluded (it has its own block)
-  const sliderArticles: Article[] = (Object.keys(sectionConfig) as Section[])
-    .filter((key) => key !== "opinion")
-    .map((key) => sectionArticles[key]?.[0])
-    .filter((a): a is Article => !!a);
-  // Secondary featured (portada 2-col grid) is driven by `layout === "destacada"`
-  // (the per-section "Destacada / 2 columnas" presentation), NOT by `featured`.
-  // `featured` is reserved for the header slide — see Header.tsx.
-  // Opinion articles have their own 4-card block on the home, so they don't appear here.
-  const secondary = allArticles.filter((a) => a.layout === "destacada" && a.section !== "opinion");
+
+  // Hero editorial + header slide + secondary grid vienen del helper cacheado.
+  // Secondary se excluye de los section grids para evitar duplicación.
+  const { heroEditorial: sliderArticles, secondary } = portadaFeatured;
+  const secondaryIds = new Set(secondary.map((a) => a.id));
+
+  // Re-excluir secondary de los section grids (edit in-place)
+  for (const key of Object.keys(sectionConfig) as Section[]) {
+    if (secondaryIds.size === 0) break;
+    sectionArticles[key] = sectionArticles[key].filter((a) => !secondaryIds.has(a.id));
+  }
 
   // Urgente articles from all sections (cross-section)
   const urgentArticles = allArticles.filter((a) => a.layout === "urgente");

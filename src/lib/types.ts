@@ -78,7 +78,7 @@ export interface EventSubmission {
   publishedEventId?: string;
 }
 
-export type ArticleLayout = "urgente" | "destacada" | "normal";
+export type ArticleLayout = "urgente" | "normal";
 
 export type AdType = "leaderboard" | "rectangle" | "sidebar" | "modal" | "infeed" | "sticky_footer";
 
