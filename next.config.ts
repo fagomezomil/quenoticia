@@ -15,7 +15,9 @@ const nextConfig: NextConfig = {
     // Storage + medios replicados (ver src/lib/stats.ts REPLICATED_DOMAINS).
     // Antes era hostname: "**" que dejaba _next/image como proxy abierto.
     remotePatterns: [
-      // Supabase Storage (avatars, media/ads)
+      // Cloudflare R2 — imágenes migradas desde Supabase Storage (2026-09-04)
+      { protocol: "https", hostname: "pub-7d90620b77a845bcbb1bf3fee8f467a2.r2.dev" },
+      // Supabase Storage (avatars, fallback para imágenes viejas no migradas)
       { protocol: "https", hostname: "uhuidlistqoonyqtpyvh.supabase.co" },
       // 5 fuentes locales del scraper
       { protocol: "https", hostname: "contextotucuman.com" },
