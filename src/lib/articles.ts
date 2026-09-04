@@ -205,15 +205,13 @@ export async function getCommentCounts(articleIds: string[]): Promise<Record<str
 
 /* ────────── Helpers de destacadas para portada + header ──────────
 
-   Un solo cached call computa los 3 conjuntos que comparten portada y Header:
+   Un solo cached call computa los 2 conjuntos que comparten portada y Header:
    - heroEditorial: hasta 5, featured primero; si hay 1-4 featured, completa con
      las más nuevas por sección (excluyendo secciones ya representadas). Si 0,
      las más nuevas por sección (comportamiento previo al refactor).
    - headerSlide: 1 por sección (excluida opinion), priorizando featured, excluyendo
      los IDs del heroEditorial (sin duplicar). Si la featured de una sección está en
      el heroEditorial, toma la siguiente más nueva.
-   - secondary: las 6 más nuevas que NO son featured ni están en heroEditorial ni
-     headerSlide. Estas se excluyen de los section grids de la portada (evitar duplicar).
 
    Cache revalidate 60s — mismo TTL que `export const revalidate = 60` de la portada.
 */
@@ -225,7 +223,6 @@ const PORTADA_SECTIONS = (Object.keys(sectionConfig) as Section[]).filter(
 async function _getPortadaFeatured(): Promise<{
   heroEditorial: CustomArticle[];
   headerSlide: CustomArticle[];
-  secondary: CustomArticle[];
 }> {
   const allActive = await getActiveArticles();
 
@@ -271,17 +268,12 @@ async function _getPortadaFeatured(): Promise<{
     }
   }
 
-  // --- secondary: 6 más nuevas que NO son featured ni están en heroEditorial/headerSlide ni son urgente ---
-  const secondary = allActive
-    .filter((a) => !a.featured && !headerIds.has(a.id) && a.layout !== "urgente")
-    .slice(0, 6);
-
-  return { heroEditorial, headerSlide, secondary };
+  return { heroEditorial, headerSlide };
 }
 
 export const getPortadaFeatured = unstable_cache(
   _getPortadaFeatured,
-  ["portada-featured-v1"],
+  ["portada-featured-v2"],
   { revalidate: 60 },
 );
 

@@ -10,8 +10,6 @@ import AdModal from "@/components/AdModal";
 import AdStickyFooter from "@/components/AdStickyFooter";
 import Footer from "@/components/Footer";
 import AnimateIn from "@/components/animate/AnimateIn";
-import AnimateStagger from "@/components/animate/AnimateStagger";
-import StaggerItem from "@/components/animate/StaggerItem";
 import HeroEditorial from "@/components/HeroEditorial";
 import { sectionConfig } from "@/lib/types";
 import type { Section, Article, SponsoredContent } from "@/lib/types";
@@ -101,13 +99,10 @@ export default async function Home() {
 
   // Hero editorial + header slide + secondary grid vienen del helper cacheado.
   // HeroEditorial + secondary se excluyen de los section grids para evitar duplicación.
-  const { heroEditorial: sliderArticles, secondary } = portadaFeatured;
-  const excludedIds = new Set<string>([
-    ...sliderArticles.map((a) => a.id),
-    ...secondary.map((a) => a.id),
-  ]);
+  const { heroEditorial: sliderArticles } = portadaFeatured;
+  const excludedIds = new Set<string>(sliderArticles.map((a) => a.id));
 
-  // Re-excluir heroEditorial + secondary de los section grids (edit in-place)
+  // Re-excluir heroEditorial de los section grids (edit in-place)
   for (const key of Object.keys(sectionConfig) as Section[]) {
     if (excludedIds.size === 0) break;
     sectionArticles[key] = sectionArticles[key].filter((a) => !excludedIds.has(a.id));
@@ -147,15 +142,6 @@ export default async function Home() {
         <AnimateIn delay={0.1}>
           <AdRotator ads={leaderboardAds} size="leaderboard" />
         </AnimateIn>
-
-        {/* Secondary featured */}
-        <AnimateStagger className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          {secondary.map((a) => (
-            <StaggerItem key={a.id}>
-              <ArticleCard article={a} variant="standard" />
-            </StaggerItem>
-          ))}
-        </AnimateStagger>
 
         {/* Section grids — opinion is rendered separately as a 4-card block */}
         {Object.entries(sectionConfig)
