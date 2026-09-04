@@ -152,7 +152,7 @@ export default async function Home() {
         <AdRotator ads={leaderboardAds} size="leaderboard" />
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 pb-4">
+      <main className="max-w-7xl mx-auto px-4 pb-4 min-w-0">
         <h1 className="sr-only">¡QUE NOTICIA! — Medio regional de Tucumán</h1>
         {/* Urgente articles — full-width red alerts */}
         {urgentArticles.length > 0 && (
