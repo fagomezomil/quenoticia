@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Ad, AdType, Section } from "@/lib/types";
 import { sectionConfig } from "@/lib/types";
 import { saveAd } from "@/app/admin/ads/actions";
+import { compressAd } from "@/lib/compress-ad";
 
 interface ClientOption {
   id: string;
@@ -83,19 +84,40 @@ export default function AdForm({ ad, clients }: AdFormProps) {
   const [mobilePreviewUrl, setMobilePreviewUrl] = useState(ad?.mobile_image_url ?? "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [compressing, setCompressing] = useState(false);
+  const [mobileCompressing, setMobileCompressing] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    setCompressing(true);
+    try {
+      const compressed = await compressAd(file, type);
+      setImageFile(compressed);
+      setPreviewUrl(URL.createObjectURL(compressed));
+    } catch {
+      // fallback al original si la compresión falla
+      setImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    } finally {
+      setCompressing(false);
+    }
   };
 
-  const handleMobileFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMobileFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setMobileImageFile(file);
-    setMobilePreviewUrl(URL.createObjectURL(file));
+    setMobileCompressing(true);
+    try {
+      const compressed = await compressAd(file, type);
+      setMobileImageFile(compressed);
+      setMobilePreviewUrl(URL.createObjectURL(compressed));
+    } catch {
+      setMobileImageFile(file);
+      setMobilePreviewUrl(URL.createObjectURL(file));
+    } finally {
+      setMobileCompressing(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -219,8 +241,18 @@ export default function AdForm({ ad, clients }: AdFormProps) {
           type="file"
           accept="image/*"
           onChange={handleFileChange}
-          className="w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-ink file:text-white file:text-xs file:font-bold hover:file:bg-ink/80"
+          disabled={compressing}
+          className="w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-ink file:text-white file:text-xs file:font-bold hover:file:bg-ink/80 disabled:opacity-50"
         />
+        {compressing && (
+          <p className="text-xs text-muted mt-1">Comprimiendo...</p>
+        )}
+        {!compressing && imageFile && imageFile.type === "image/gif" && (
+          <p className="text-xs text-muted mt-1">GIF sin comprimir (preserva animación).</p>
+        )}
+        {!compressing && imageFile && imageFile.type !== "image/gif" && (
+          <p className="text-xs text-muted mt-1">Optimizada a WebP · {Math.round(imageFile.size / 1024)}KB.</p>
+        )}
         {previewUrl && (
           <div className="mt-2">
             <img
@@ -243,8 +275,18 @@ export default function AdForm({ ad, clients }: AdFormProps) {
           type="file"
           accept="image/*"
           onChange={handleMobileFileChange}
-          className="w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-ink file:text-white file:text-xs file:font-bold hover:file:bg-ink/80"
+          disabled={mobileCompressing}
+          className="w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-ink file:text-white file:text-xs file:font-bold hover:file:bg-ink/80 disabled:opacity-50"
         />
+        {mobileCompressing && (
+          <p className="text-xs text-muted mt-1">Comprimiendo...</p>
+        )}
+        {!mobileCompressing && mobileImageFile && mobileImageFile.type === "image/gif" && (
+          <p className="text-xs text-muted mt-1">GIF sin comprimir (preserva animación).</p>
+        )}
+        {!mobileCompressing && mobileImageFile && mobileImageFile.type !== "image/gif" && (
+          <p className="text-xs text-muted mt-1">Optimizada a WebP · {Math.round(mobileImageFile.size / 1024)}KB.</p>
+        )}
         {mobilePreviewUrl && (
           <div className="mt-2">
             <img
