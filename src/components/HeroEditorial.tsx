@@ -31,7 +31,7 @@ export default function HeroEditorial({ articles }: HeroEditorialProps) {
   const leadCfg = sectionConfig[lead.section as keyof typeof sectionConfig];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-w-0">
       {/* Lead story — 2/3 width, comic panel */}
       <Link
         href={`/${lead.section}/${lead.id}`}
