@@ -6,6 +6,7 @@ import { useLikesStore } from "@/lib/store/likes";
 import { useFavoritesStore } from "@/lib/store/favorites";
 import { createClient } from "@/lib/supabase/client";
 import { sectionConfig } from "@/lib/types";
+import { compressAvatar } from "@/lib/compress-avatar";
 import Link from "next/link";
 
 interface ProfileArticle {
@@ -67,24 +68,34 @@ export default function ProfilePageClient({ likedArticles, favoritedArticles, us
     }
 
     setUploading(true);
-    const supabase = createClient();
-    const path = `${user.id}/avatar.${ext}`;
+    try {
+      // Comprimir client-side: resize 256x256 + WebP quality 80 → 10-30KB típico.
+      const compressed = await compressAvatar(file);
 
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(path, file, { upsert: true });
+      const supabase = createClient();
+      const path = `${user.id}/avatar.webp`;
 
-    if (uploadError) {
-      alert("Error al subir imagen: " + uploadError.message);
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(path, compressed, {
+          upsert: true,
+          contentType: "image/webp",
+        });
+
+      if (uploadError) {
+        alert("Error al subir imagen: " + uploadError.message);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+
+      await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", user.id);
+      await refreshProfile();
+    } catch (err) {
+      alert("Error al procesar la imagen: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
       setUploading(false);
-      return;
     }
-
-    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
-
-    await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", user.id);
-    await refreshProfile();
-    setUploading(false);
   };
 
   const handleSaveName = async () => {
