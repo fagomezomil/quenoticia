@@ -100,14 +100,17 @@ export default async function Home() {
   const allArticles = Object.values(sectionArticles).flat();
 
   // Hero editorial + header slide + secondary grid vienen del helper cacheado.
-  // Secondary se excluye de los section grids para evitar duplicación.
+  // HeroEditorial + secondary se excluyen de los section grids para evitar duplicación.
   const { heroEditorial: sliderArticles, secondary } = portadaFeatured;
-  const secondaryIds = new Set(secondary.map((a) => a.id));
+  const excludedIds = new Set<string>([
+    ...sliderArticles.map((a) => a.id),
+    ...secondary.map((a) => a.id),
+  ]);
 
-  // Re-excluir secondary de los section grids (edit in-place)
+  // Re-excluir heroEditorial + secondary de los section grids (edit in-place)
   for (const key of Object.keys(sectionConfig) as Section[]) {
-    if (secondaryIds.size === 0) break;
-    sectionArticles[key] = sectionArticles[key].filter((a) => !secondaryIds.has(a.id));
+    if (excludedIds.size === 0) break;
+    sectionArticles[key] = sectionArticles[key].filter((a) => !excludedIds.has(a.id));
   }
 
   // Urgente articles from all sections (cross-section)
