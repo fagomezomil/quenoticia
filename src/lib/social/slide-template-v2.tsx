@@ -40,11 +40,37 @@ export const STORY_W = 1080;
 export const STORY_H = 1920;
 
 export function fitN(s: string, max: number): string {
-  const c = s.replace(/\s+/g, " ").trim();
+  // U+2011 (guion no-separador) no tiene glifo en Oswald → tofu. Normalizar a "-".
+  const c = s.replace(/\u2011/g, "-").replace(/\s+/g, " ").trim();
   if (c.length <= max) return c;
   const cut = c.slice(0, max - 1);
   const sp = cut.lastIndexOf(" ");
   return cut.slice(0, sp > max * 0.7 ? sp : max - 1) + "…";
+}
+
+/** Auto-fit de títulos: elige el font size más grande cuyas líneas estimadas
+ *  entran en maxHeight. Devuelve también la cantidad de líneas para que el
+ *  caller posicione la barra/excerpt inmediatamente debajo (sin gap vacío).
+ *
+ *  Estimación: Oswald 700 uppercase promedia ~0.60em por carácter. Es
+ *  deliberadamente conservador (sobreestima líneas) para que nunca se pase
+ *  de largo: peor caso, el título queda un escalón más chico. */
+export function autoFitTitle(
+  title: string,
+  width: number,
+  maxHeight: number,
+  lineHeight: number,
+  sizes: number[],
+): { size: number; lines: number } {
+  const chars = title.replace(/\u2011/g, "-").replace(/\s+/g, " ").trim().length || 1;
+  for (const size of sizes) {
+    const charsPerLine = width / (size * 0.6);
+    const lines = Math.ceil(chars / charsPerLine);
+    if (lines * size * lineHeight <= maxHeight) return { size, lines };
+  }
+  const size = sizes[sizes.length - 1];
+  const lines = Math.ceil(chars / (width / (size * 0.6)));
+  return { size, lines };
 }
 
 /** Logo sin chip — directo sobre el fondo. */
@@ -191,8 +217,8 @@ function CarruselFullBleed(data: SlideDataV2): React.ReactElement {
     React.createElement(Chip, { label: cfg.label, color: cfg.color, top: 60, left: 60 }),
     React.createElement(
       "div",
-      { style: { position: "absolute", top: 820, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: 68, lineHeight: 1.08, color: "#ffffff" } },
-      fitN(data.title, 80),
+      { style: { position: "absolute", top: 820, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: autoFitTitle(data.title, 960, 330, 1.08, [68, 56, 46]).size, lineHeight: 1.08, color: "#ffffff" } },
+      fitN(data.title, 160),
     ),
     React.createElement(HalftoneBar, { bg: HALFTONE_WHITE_SOFT, top: 1170, left: 60, width: 960, height: 8 }),
     React.createElement(WebText, { inkColor: "#ffffff", bottom: 48, left: 60 }),
@@ -202,6 +228,11 @@ function CarruselFullBleed(data: SlideDataV2): React.ReactElement {
 
 function CarruselTitular(data: SlideDataV2): React.ReactElement {
   const cfg = sectionConfig[data.section];
+  // Auto-fit: título completo, font escalonado + barra/excerpt pegados al bloque.
+  const { size, lines } = autoFitTitle(data.title, 960, 540, 1.02, [98, 80, 64, 52]);
+  const titleHeight = Math.ceil(lines * size * 1.02);
+  const barTop = Math.min(880, 340 + titleHeight + 70);
+  const excerptTop = barTop + 40;
   return React.createElement(
     "div",
     { style: { display: "flex", width: CARRUSEL_W, height: CARRUSEL_H, position: "relative", fontFamily: "Inter", backgroundColor: CREAM } },
@@ -210,14 +241,14 @@ function CarruselTitular(data: SlideDataV2): React.ReactElement {
     React.createElement(Chip, { label: cfg.label, color: cfg.color, top: 90, left: 60 }),
     React.createElement(
       "div",
-      { style: { position: "absolute", top: 340, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: 98, lineHeight: 1.02, color: INK, textTransform: "uppercase" } },
-      fitN(data.title, 44),
+      { style: { position: "absolute", top: 340, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: size, lineHeight: 1.02, color: INK, textTransform: "uppercase" } },
+      fitN(data.title, 200),
     ),
-    React.createElement(HalftoneBar, { bg: HALFTONE_DARK, top: 880, left: 60, width: 960, height: 10 }),
+    React.createElement(HalftoneBar, { bg: HALFTONE_DARK, top: barTop, left: 60, width: 960, height: 10 }),
     data.excerpt &&
       React.createElement(
         "div",
-        { style: { position: "absolute", top: 920, left: 60, width: 960, display: "flex", fontFamily: "Inter", fontWeight: 400, fontSize: 28, lineHeight: 1.4, color: "#6b5d4f" } },
+        { style: { position: "absolute", top: excerptTop, left: 60, width: 960, display: "flex", fontFamily: "Inter", fontWeight: 400, fontSize: 28, lineHeight: 1.4, color: "#6b5d4f" } },
         fitN(data.excerpt, 160),
       ),
     React.createElement(WebText, { inkColor: INK, bottom: 48, left: 60 }),
@@ -284,29 +315,35 @@ function CarruselDato(data: SlideDataV2): React.ReactElement {
 }
 
 function CarruselCta(data: SlideDataV2): React.ReactElement {
-  const cfg = sectionConfig[data.section];
+  // Placa de marca pura (misma lógica que StoryCta, métricas 1080×1350).
   return React.createElement(
     "div",
     { style: { display: "flex", width: CARRUSEL_W, height: CARRUSEL_H, position: "relative", fontFamily: "Inter", backgroundColor: BRAND } },
     React.createElement("div", { style: { position: "absolute", top: 0, left: 0, width: CARRUSEL_W, height: CARRUSEL_H, backgroundImage: HALFTONE_DARK_SOFT, backgroundSize: "10px 10px" } }),
-    React.createElement(Chip, { label: cfg.label, color: INK, top: 60, left: 60 }),
     React.createElement(
       "div",
-      { style: { position: "absolute", top: 340, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: 74, lineHeight: 1.08, color: INK } },
-      fitN(data.title, 54),
+      { style: { position: "absolute", top: 380, left: 0, width: CARRUSEL_W, display: "flex", justifyContent: "center" } },
+      data.logoDarkDataUrl
+        ? React.createElement("img", { src: data.logoDarkDataUrl, style: { width: 420, height: 420, objectFit: "contain" } })
+        : React.createElement("div", { style: { fontFamily: "Oswald", fontWeight: 700, fontSize: 84, color: INK } }, "¡QUE NOTICIA!"),
     ),
     React.createElement(
       "div",
-      { style: { position: "absolute", top: 800, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: 50, color: INK, alignItems: "center" } },
-      "Leé la nota completa",
-      React.createElement("span", { style: { marginLeft: 16, fontSize: 50 } }, "\u2192"),
+      { style: { position: "absolute", top: 850, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: 44, lineHeight: 1.3, color: INK, textTransform: "uppercase", letterSpacing: 2, justifyContent: "center", textAlign: "center" } },
+      "Todo lo que pasa en Tucumán",
+    ),
+    React.createElement(HalftoneBar, { bg: HALFTONE_DARK, top: 1020, left: 240, width: 600, height: 8 }),
+    React.createElement(
+      "div",
+      { style: { position: "absolute", top: 1080, left: 0, width: CARRUSEL_W, display: "flex", fontFamily: "Inter", fontWeight: 600, fontSize: 30, color: INK, justifyContent: "center" } },
+      "Seguí leyendo en",
     ),
     React.createElement(
       "div",
-      { style: { position: "absolute", top: 920, left: 60, display: "flex", fontFamily: "Inter", fontWeight: 600, fontSize: 32, color: INK, letterSpacing: 0.5 } },
-      "quenoticia.com.ar",
+      { style: { position: "absolute", top: 1130, left: 0, width: CARRUSEL_W, display: "flex", fontFamily: "Oswald", fontWeight: 600, fontSize: 44, letterSpacing: 0.5, justifyContent: "center" } },
+      React.createElement("span", { style: { color: "#ffffff" } }, "que"),
+      React.createElement("span", { style: { color: INK } }, "noticia.com.ar"),
     ),
-    React.createElement(Logo, { logoDataUrl: data.logoDarkDataUrl, bottom: 24, right: 60, size: 150 }),
   );
 }
 
@@ -324,8 +361,8 @@ function StoryFullBleed(data: SlideDataV2): React.ReactElement {
     React.createElement(Chip, { label: cfg.label, color: cfg.color, top: 60, left: 60, fontSize: 30 }),
     React.createElement(
       "div",
-      { style: { position: "absolute", top: 1180, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: 84, lineHeight: 1.08, color: "#ffffff" } },
-      fitN(data.title, 70),
+      { style: { position: "absolute", top: 1180, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: autoFitTitle(data.title, 960, 500, 1.08, [84, 70, 58]).size, lineHeight: 1.08, color: "#ffffff" } },
+      fitN(data.title, 180),
     ),
     React.createElement(HalftoneBar, { bg: HALFTONE_WHITE_SOFT, top: 1700, left: 60, width: 960, height: 8 }),
     React.createElement(WebText, { inkColor: "#ffffff", bottom: 48, left: 60, fontSize: 26 }),
@@ -335,6 +372,11 @@ function StoryFullBleed(data: SlideDataV2): React.ReactElement {
 
 function StoryTitular(data: SlideDataV2): React.ReactElement {
   const cfg = sectionConfig[data.section];
+  // Auto-fit: título completo, font escalonado + barra/excerpt pegados al bloque.
+  const { size, lines } = autoFitTitle(data.title, 960, 820, 1.02, [118, 96, 78, 62]);
+  const titleHeight = Math.ceil(lines * size * 1.02);
+  const barTop = Math.min(1300, 480 + titleHeight + 90);
+  const excerptTop = barTop + 60;
   return React.createElement(
     "div",
     { style: { display: "flex", width: STORY_W, height: STORY_H, position: "relative", fontFamily: "Inter", backgroundColor: CREAM } },
@@ -343,14 +385,14 @@ function StoryTitular(data: SlideDataV2): React.ReactElement {
     React.createElement(Chip, { label: cfg.label, color: cfg.color, top: 100, left: 60, fontSize: 30 }),
     React.createElement(
       "div",
-      { style: { position: "absolute", top: 480, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: 118, lineHeight: 1.02, color: INK, textTransform: "uppercase" } },
-      fitN(data.title, 46),
+      { style: { position: "absolute", top: 480, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: size, lineHeight: 1.02, color: INK, textTransform: "uppercase" } },
+      fitN(data.title, 220),
     ),
-    React.createElement(HalftoneBar, { bg: HALFTONE_DARK, top: 1300, left: 60, width: 960, height: 12 }),
+    React.createElement(HalftoneBar, { bg: HALFTONE_DARK, top: barTop, left: 60, width: 960, height: 12 }),
     data.excerpt &&
       React.createElement(
         "div",
-        { style: { position: "absolute", top: 1360, left: 60, width: 960, display: "flex", fontFamily: "Inter", fontWeight: 400, fontSize: 32, lineHeight: 1.4, color: "#6b5d4f" } },
+        { style: { position: "absolute", top: excerptTop, left: 60, width: 960, display: "flex", fontFamily: "Inter", fontWeight: 400, fontSize: 32, lineHeight: 1.4, color: "#6b5d4f" } },
         fitN(data.excerpt, 180),
       ),
     React.createElement(WebText, { inkColor: INK, bottom: 48, left: 60, fontSize: 26 }),
@@ -417,29 +459,36 @@ function StoryDato(data: SlideDataV2): React.ReactElement {
 }
 
 function StoryCta(data: SlideDataV2): React.ReactElement {
-  const cfg = sectionConfig[data.section];
+  // Placa de marca pura: cierra el turno sin nota (sin chip de sección ni título
+  // repetido). Logo grande + slogan + CTA de lectura.
   return React.createElement(
     "div",
     { style: { display: "flex", width: STORY_W, height: STORY_H, position: "relative", fontFamily: "Inter", backgroundColor: BRAND } },
     React.createElement("div", { style: { position: "absolute", top: 0, left: 0, width: STORY_W, height: STORY_H, backgroundImage: HALFTONE_DARK_SOFT, backgroundSize: "10px 10px" } }),
-    React.createElement(Chip, { label: cfg.label, color: INK, top: 100, left: 60, fontSize: 30 }),
     React.createElement(
       "div",
-      { style: { position: "absolute", top: 500, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: 84, lineHeight: 1.08, color: INK } },
-      fitN(data.title, 54),
+      { style: { position: "absolute", top: 640, left: 0, width: STORY_W, display: "flex", justifyContent: "center" } },
+      data.logoDarkDataUrl
+        ? React.createElement("img", { src: data.logoDarkDataUrl, style: { width: 500, height: 500, objectFit: "contain" } })
+        : React.createElement("div", { style: { fontFamily: "Oswald", fontWeight: 700, fontSize: 96, color: INK } }, "¡QUE NOTICIA!"),
     ),
     React.createElement(
       "div",
-      { style: { position: "absolute", top: 1140, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: 56, color: INK, alignItems: "center" } },
-      "Leé la nota completa",
-      React.createElement("span", { style: { marginLeft: 18, fontSize: 56 } }, "\u2192"),
+      { style: { position: "absolute", top: 1240, left: 60, width: 960, display: "flex", fontFamily: "Oswald", fontWeight: 700, fontSize: 56, lineHeight: 1.3, color: INK, textTransform: "uppercase", letterSpacing: 2, justifyContent: "center", textAlign: "center" } },
+      "Todo lo que pasa en Tucumán",
+    ),
+    React.createElement(HalftoneBar, { bg: HALFTONE_DARK, top: 1480, left: 240, width: 600, height: 10 }),
+    React.createElement(
+      "div",
+      { style: { position: "absolute", top: 1560, left: 0, width: STORY_W, display: "flex", fontFamily: "Inter", fontWeight: 600, fontSize: 34, color: INK, justifyContent: "center" } },
+      "Seguí leyendo en",
     ),
     React.createElement(
       "div",
-      { style: { position: "absolute", top: 1310, left: 60, display: "flex", fontFamily: "Inter", fontWeight: 600, fontSize: 36, color: INK, letterSpacing: 0.5 } },
-      "quenoticia.com.ar",
+      { style: { position: "absolute", top: 1620, left: 0, width: STORY_W, display: "flex", fontFamily: "Oswald", fontWeight: 600, fontSize: 52, letterSpacing: 0.5, justifyContent: "center" } },
+      React.createElement("span", { style: { color: "#ffffff" } }, "que"),
+      React.createElement("span", { style: { color: INK } }, "noticia.com.ar"),
     ),
-    React.createElement(Logo, { logoDataUrl: data.logoDarkDataUrl, bottom: 24, right: 60, size: 180 }),
   );
 }
 

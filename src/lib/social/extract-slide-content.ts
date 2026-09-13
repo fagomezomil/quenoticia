@@ -154,7 +154,7 @@ export function extractQuote(
   body: string | null | undefined,
 ): { text: string; author?: string } | null {
   if (!body) return null;
-  const clean = body.replace(/\s+/g, " ").trim();
+  const clean = body.replace(/\u2011/g, "-").replace(/\s+/g, " ").trim();
   if (!clean) return null;
 
   // Patrones de comillas: «…», "…", "…", '…'
@@ -184,49 +184,72 @@ export function extractQuote(
 }
 
 /** Extrae un dato numérico del body para el layout "dato".
- *  Busca patrones: $X, X%, X mil, X millones, X mil millones, X años, X personas.
- *  Devuelve { value, label } o null. */
+ *  El value SIEMPRE incluye la unidad (67,4% / $2.500 millones / 12.000) y el
+ *  label lleva contexto real ("del presupuesto"). Sin unidad clara → null
+ *  (el caller cae a titular, mejor que un número suelto sin sentido). */
 export function extractStat(
   body: string | null | undefined,
   title: string,
 ): { value: string; label: string } | null {
   if (!body) return null;
-  const clean = body.replace(/\s+/g, " ").trim();
+  const clean = body.replace(/\u2011/g, "-").replace(/\s+/g, " ").trim();
   if (!clean) return null;
 
-  // Patrones de números con contexto. Orden: más específico primero.
-  const patterns: Array<{ re: RegExp; valueGroup: number; labelGroup?: number }> = [
-    // $X millones / $X mil millones / $X mil
-    { re: /\$\s?(\d[\d.,]*)\s+(mil millones|millones|mil|billones)/g, valueGroup: 0, labelGroup: -1 },
-    // X% de/algo
-    { re: /(\d[\d.,]*)\s?%\s*(?:de|del|de los|de las|de la)?\s+([a-záéíóúñ ,]{5,60})/g, valueGroup: 1, labelGroup: 2 },
+  // Palabras que siguen al número y hacen de label contextual.
+  // Orden longest-first: "de" antes que "del" se come la "l" de "del".
+  const DE_WORDS = "(?:del|de los|de las|de la|de el|de)?";
+  const labelFrom = (m: RegExpExecArray, wordIdx: number, deIdx?: number): string => {
+    const de = deIdx !== undefined ? (m[deIdx] ?? "") : "";
+    const words = (m[wordIdx] ?? "").trim();
+    return trimLabel(`${de} ${words}`);
+  };
+
+  // Orden: más específico primero. Cada patrón arma value CON unidad.
+  const patterns: Array<(s: string) => { value: string; label: string } | null> = [
+    // $X millones / $X mil millones / $X mil — label: contexto siguiente
+    (s) => {
+      const m = /\$\s?(\d[\d.,]*)\s+(mil millones|millones|mil|billones)/.exec(s);
+      if (!m) return null;
+      const afterIdx = m.index + m[0].length;
+      const after = s.slice(afterIdx, afterIdx + 80).trim();
+      const label = trimLabel(
+        after.replace(/^(?:del|de los|de las|de la|de el|de|para|en)\s+/i, "").split(/[.,;]/)[0] ?? "",
+      );
+      return { value: `$${m[1]} ${m[2]}`, label };
+    },
+    // X% de algo — el "de/del" queda en el label
+    (s) => {
+      const m = new RegExp(`(\\d[\\d.,]*)\\s?%\\s*${DE_WORDS}\\s*([a-záéíóúñ ,]{5,60})`).exec(s);
+      if (!m) return null;
+      return { value: `${m[1]}%`, label: labelFrom(m, 2, 3) };
+    },
     // X millones de algo
-    { re: /(\d[\d.,]*)\s+millones\s+(?:de\s+)?([a-záéíóúñ ,]{5,60})/g, valueGroup: 1, labelGroup: 2 },
+    (s) => {
+      const m = new RegExp(`(\\d[\\d.,]*)\\s+millones\\s+${DE_WORDS}\\s*([a-záéíóúñ ,]{5,60})`).exec(s);
+      if (!m) return null;
+      return { value: `${m[1]} millones`, label: labelFrom(m, 2, 3) };
+    },
     // X mil de algo
-    { re: /(\d[\d.,]*)\s+mil\s+(?:de\s+)?([a-záéíóúñ ,]{5,60})/g, valueGroup: 1, labelGroup: 2 },
-    // X personas
-    { re: /(\d[\d.,]*)\s+(personas|habitantes|casos|muertos|heridos|detenidos|vehículos|unidades)/g, valueGroup: 1, labelGroup: 2 },
+    (s) => {
+      const m = new RegExp(`(\\d[\\d.,]*)\\s+mil\\s+${DE_WORDS}\\s*([a-záéíóúñ ,]{5,60})`).exec(s);
+      if (!m) return null;
+      return { value: `${m[1]} mil`, label: labelFrom(m, 2, 3) };
+    },
+    // X personas/casos/… — label: unidad + contexto inmediato
+    (s) => {
+      const m = /(\d[\d.,]*)\s+(personas|habitantes|casos|muertos|heridos|detenidos|vehículos|unidades)([^.,;]{0,60})/.exec(s);
+      if (!m) return null;
+      return { value: m[1], label: trimLabel(`${m[2]}${m[3] ?? ""}`) };
+    },
   ];
 
-  for (const { re, valueGroup, labelGroup } of patterns) {
-    re.lastIndex = 0;
-    const match = re.exec(clean);
-    if (match) {
-      const value = match[valueGroup].trim();
-      if (labelGroup && labelGroup > 0 && match[labelGroup]) {
-        const label = match[labelGroup].trim().replace(/\s+/g, " ").slice(0, 80);
-        return { value, label: capitalize(label) };
-      }
-      // Para patrones sin labelGroup, construir label del contexto siguiente
-      const afterIdx = clean.indexOf(match[0]) + match[0].length;
-      const after = clean.slice(afterIdx, afterIdx + 80).trim();
-      const label = after.split(/[.,;]/)[0].trim().slice(0, 80);
-      if (label.length >= 5) {
-        return { value, label: capitalize(label) };
-      }
-      // Fallback: usar el title como label
-      return { value, label: title.slice(0, 80) };
-    }
+  for (const build of patterns) {
+    const res = build(clean);
+    if (!res) continue;
+    // Sin contexto en el body → label = título (recortado), como fallback.
+    const label = res.label.length >= 5 ? res.label : title.replace(/\u2011/g, "-").slice(0, 80);
+    if (label.length < 5) continue;
+    return { value: res.value, label: capitalize(label) };
   }
 
   return null;
@@ -234,4 +257,14 @@ export function extractStat(
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** Recorta el label a 80 chars y saca conectores colgantes al final
+ *  ("Presupuesto asignado por la" → "Presupuesto asignado"). Itera porque
+ *  pueden quedar dos seguidos ("por la" → "por" → fuera). */
+function trimLabel(s: string): string {
+  let out = s.replace(/\s+/g, " ").trim().slice(0, 80).trim();
+  const dangling = /\s+(?:de|del|la|el|los|las|por|para|en|y|a|al|un|una|con|según)\s*$/i;
+  while (dangling.test(out)) out = out.replace(dangling, "").trim();
+  return out;
 }

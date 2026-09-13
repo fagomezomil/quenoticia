@@ -101,6 +101,17 @@ function formatDateLabel(iso: string): string {
   }
 }
 
+/** Excerpt para el slide: si la nota no tiene, primeras ~180 chars del body
+ *  (evita placas titular con el sector inferior vacío). El fitN del template
+ *  recorta con "…" si hace falta. */
+function excerptForSlide(note: SelectedNote): string | undefined {
+  const ex = note.excerpt?.trim();
+  if (ex) return ex;
+  const body = note.body?.replace(/\u2011/g, "-").replace(/\s+/g, " ").trim();
+  if (!body) return undefined;
+  return body.slice(0, 180);
+}
+
 /** Sube un PNG a R2 con path `social/{timestamp}-{section}.png`
  *  y devuelve la URL pública. */
 async function uploadSlidePng(png: Buffer, section: string, timestamp: number): Promise<string> {
@@ -228,7 +239,7 @@ export async function buildCarousel(): Promise<CarouselResult> {
           title: note.title,
           section: note.section,
           imageDataUrl: note.image_url ?? "",
-          excerpt: note.excerpt ?? undefined,
+          excerpt: excerptForSlide(note),
           dateLabel: formatDateLabel(note.created_at),
           sourceLabel: note.author ?? undefined,
           layout: plan.layout,
@@ -310,7 +321,7 @@ export async function buildStories(): Promise<StoriesResult> {
           title: note.title,
           section: note.section,
           imageDataUrl: note.image_url ?? "",
-          excerpt: note.excerpt ?? undefined,
+          excerpt: excerptForSlide(note),
           dateLabel: formatDateLabel(note.created_at),
           sourceLabel: note.author ?? undefined,
           layout: plan.layout,
